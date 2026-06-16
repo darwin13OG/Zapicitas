@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,24 +22,18 @@
     </h1>
 
     <p class="text-base text-slate-400 leading-relaxed max-w-md mx-auto">
-      ZapiCitas es el sistema de agendamiento más rápido y sencillo para tu negocio. Sin llamadas, sin mensajes acumulados en WhatsApp y controlado 100% desde tu celular.
+      ZapiCitas es el sistema de agendamiento más rápido y sencillo para tu negocio. Sin llamadas ni mensajes acumulados en WhatsApp.
     </p>
 
-  <!-- REEMPLAZA EL BLOQUE DE BOTONES ANTERIOR POR ESTE -->
-<div class="mt-4 flex flex-col sm:flex-row gap-3">
-  <!-- Botón para Nuevos: Los manda a la sección de precios de abajo -->
-  <a href="#planes" class="inline-block w-full py-4 px-8 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-base shadow-lg shadow-purple-600/30 transition-all text-center">
-    Registrar mi Negocio
-  </a>
-  <!-- Botón para Clientes Existentes: Los manda directo a loguearse -->
-  <a href="admin" class="inline-block w-full py-4 px-8 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 font-bold text-base transition-all text-center">
-    Entrar al Panel Admin
-  </a>
-  <!-- Botón para Clientes de la barbería -->
-  <a href="reserva" class="inline-block w-full py-4 px-8 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 font-bold text-base transition-all text-center">
-    Sección de Clientes
-  </a>
-</div>
+    <div class="mt-4 flex flex-col sm:flex-row gap-3">
+      <a href="#planes" class="inline-block w-full py-4 px-8 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-base shadow-lg shadow-purple-600/30 transition-all text-center">
+        Registrar mi Negocio
+      </a>
+      <a href="admin" class="inline-block w-full py-4 px-8 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 font-bold text-base transition-all text-center">
+        Entrar al Panel Admin
+      </a>
+    </div>
+  </section>
 
   <!-- BENEFICIOS -->
   <section class="w-full py-12 px-6 max-w-xl mx-auto flex flex-col gap-6">
@@ -48,25 +42,16 @@
         <span>📱</span> Adiós al WhatsApp saturado
       </div>
       <p class="text-sm text-slate-400 leading-relaxed">
-        Tus clientes reservan su propio turno en 3 toques desde un enlace personalizado, sin que tú tengas que pausar tu trabajo para contestar mensajes.
-      </p>
-    </div>
-
-    <div class="flex flex-col gap-3 p-6 rounded-2xl bg-slate-900/50 border border-slate-900">
-      <div class="text-purple-400 font-bold text-xl flex items-center gap-2">
-        <span>⚡</span> Panel Móvil Ultra-Limpio
-      </div>
-      <p class="text-sm text-slate-400 leading-relaxed">
-        Una interfaz diseñada exclusivamente para pantallas de celulares. Revisa tus citas del día, cancela o agrega nuevos turnos de forma cómoda.
+        Tus clientes reservan su propio turno en 3 toques desde un enlace personalizado.
       </p>
     </div>
   </section>
 
-  <!-- TARIFAS CON ENLACES DE WOMPI -->
+  <!-- TARIFAS -->
   <section id="planes" class="w-full py-16 px-6 max-w-xl mx-auto text-center flex flex-col gap-8">
     <div class="flex flex-col gap-2">
       <h2 class="text-2xl font-bold text-white">Planes Hechos para Crecer</h2>
-      <p class="text-sm text-slate-400">Elige la forma de pago que más te convenga con Wompi. Todo ilimitado.</p>
+      <p class="text-sm text-slate-400">Paga con Wompi y activa tu cuenta al instante.</p>
     </div>
 
     <div class="flex flex-col gap-6 text-left">
@@ -76,24 +61,20 @@
           <span class="text-xs font-bold tracking-wider text-purple-400 uppercase">Suscripción Mensual</span>
           <div class="text-3xl font-extrabold text-white mt-1">$20.000 <span class="text-sm font-normal text-slate-500">COP / mes</span></div>
         </div>
-        <p class="text-xs text-slate-400">Control total e inmediato de tu agenda mes a mes, sin contratos de permanencia.</p>
-        
-        <a href="https://checkout.nequi.wompi.co/l/ofT0mJ" target="_blank" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white text-center text-xs font-bold rounded-xl shadow-md transition-all mt-2">
-          Pagar Mensual con Wompi (Nequi/PSE)
+        <a href="https://checkout.nequi.wompi.co/l/ofT0mJ" target="_blank" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white text-center text-xs font-bold rounded-xl transition-all">
+          Pagar Mensual con Wompi
         </a>
       </div>
 
       <!-- Anual -->
       <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-purple-600 flex flex-col gap-4 relative">
-        <span class="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-600 text-white">Ahorra 2 Meses</span>
+        <span class="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-purple-600 text-white">Ahorra 2 Meses</span>
         <div>
           <span class="text-xs font-bold tracking-wider text-purple-400 uppercase">Plan Anual Oro</span>
           <div class="text-3xl font-extrabold text-white mt-1">$200.000 <span class="text-sm font-normal text-slate-500">COP / año</span></div>
         </div>
-        <p class="text-xs text-slate-400">Asegura tu plataforma durante todo el año, ahorra $40.000 pesos y olvídate de pagos mensuales.</p>
-        
-        <a href="https://checkout.nequi.wompi.co/l/Pc5a1K" target="_blank" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white text-center text-xs font-bold rounded-xl shadow-md transition-all mt-2">
-          Pagar Anual con Wompi (Ahorrar)
+        <a href="https://checkout.nequi.wompi.co/l/Pc5a1K" target="_blank" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white text-center text-xs font-bold rounded-xl transition-all">
+          Pagar Anual con Wompi
         </a>
       </div>
     </div>
