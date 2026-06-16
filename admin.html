@@ -74,6 +74,10 @@
       const [celular, setCelular] = useState('');
       const [password, setPassword] = useState('');
       const [copied, setCopied] = useState(false);
+      const customClientLink = useMemo(() => {
+        if (!barberiaId) return '';
+        return `${window.location.origin}/reserva?id=${barberiaId}`;
+      }, [barberiaId]);
 
       const daysList = useMemo(() => getNextSevenDays(), []);
       const timeSlots = useMemo(() => generate30MinSlots(START_HOUR, END_HOUR), []);
