@@ -25,17 +25,21 @@
       ZapiCitas es el sistema de agendamiento más rápido y sencillo para tu negocio. Sin llamadas, sin mensajes acumulados en WhatsApp y controlado 100% desde tu celular.
     </p>
 
-    <div class="mt-4 flex flex-col sm:flex-row gap-3">
-      <!-- CORREGIDO: Ahora apunta a la ruta limpia /admin -->
-      <a href="admin" class="inline-block w-full py-4 px-8 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-base shadow-lg shadow-purple-600/30 transition-all text-center">
-        Registrar mi Negocio / Entrar Admin
-      </a>
-      <!-- CORREGIDO: Ahora apunta a la ruta limpia /reserva -->
-      <a href="reserva" class="inline-block w-full py-4 px-8 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 font-bold text-base transition-all text-center">
-        Sección de Clientes
-      </a>
-    </div>
-  </section>
+  <!-- REEMPLAZA EL BLOQUE DE BOTONES ANTERIOR POR ESTE -->
+<div class="mt-4 flex flex-col sm:flex-row gap-3">
+  <!-- Botón para Nuevos: Los manda a la sección de precios de abajo -->
+  <a href="#planes" class="inline-block w-full py-4 px-8 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-base shadow-lg shadow-purple-600/30 transition-all text-center">
+    Registrar mi Negocio
+  </a>
+  <!-- Botón para Clientes Existentes: Los manda directo a loguearse -->
+  <a href="admin" class="inline-block w-full py-4 px-8 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 font-bold text-base transition-all text-center">
+    Entrar al Panel Admin
+  </a>
+  <!-- Botón para Clientes de la barbería -->
+  <a href="reserva" class="inline-block w-full py-4 px-8 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 font-bold text-base transition-all text-center">
+    Sección de Clientes
+  </a>
+</div>
 
   <!-- BENEFICIOS -->
   <section class="w-full py-12 px-6 max-w-xl mx-auto flex flex-col gap-6">
