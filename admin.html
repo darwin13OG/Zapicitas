@@ -65,6 +65,7 @@
 
     function App() {
       const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [isRegisterMode, setIsRegisterMode] = useState(false); // Controla si es login o el cuestionario de registro nuevo
       const [barberiaId, setBarberiaId] = useState(null); 
       const [barberiaName, setBarberiaName] = useState('');
       const [celular, setCelular] = useState('');
@@ -105,36 +106,48 @@
         }
       }, [isAuthenticated, barberiaId]);
 
-      const handleLoginSubmit = async (e) => {
+      // Control de Acceso y Registro blindado
+      const handleAuthSubmit = async (e) => {
         e.preventDefault();
         if (!barberiaName.trim() || !celular.trim() || !password.trim()) return;
 
         const { data: existente } = await supabase.from('perfil_barberia').select('*').eq('celular', celular.trim());
 
-        if (existente && existente.length > 0) {
-          if (existente[0].clave_acceso === password.trim()) {
-            setBarberiaId(existente[0].id);
-            setBarberiaName(existente[0].nombre_negocio);
-            setIsAuthenticated(true);
-          } else {
-            alert('Contraseña incorrecta.');
+        if (isRegisterMode) {
+          // Proceso de cuestionario post-pago
+          if (existente && existente.length > 0) {
+            alert('Este número de celular ya tiene una barbería registrada. Intenta iniciar sesión.');
+            return;
           }
-        } else {
           const { data: nuevo, error } = await supabase.from('perfil_barberia').insert([{ nombre_negocio: barberiaName.trim(), celular: celular.trim(), clave_acceso: password.trim() }]).select();
           if (!error && nuevo && nuevo.length > 0) {
-            alert('¡Negocio registrado con éxito!');
+            alert('¡Tu barbería ha sido dada de alta con éxito!');
             setBarberiaId(nuevo[0].id);
             setBarberiaName(nuevo[0].nombre_negocio);
             setIsAuthenticated(true);
           } else {
-            alert('Error al registrar.');
+            alert('Hubo un error al registrar los datos.');
+          }
+        } else {
+          // Proceso normal de entrada al admin
+          if (existente && existente.length > 0) {
+            if (existente[0].clave_acceso === password.trim()) {
+              setBarberiaId(existente[0].id);
+              setBarberiaName(existente[0].nombre_negocio);
+              setIsAuthenticated(true);
+            } else {
+              alert('Contraseña incorrecta.');
+            }
+          } else {
+            alert('No se encontró ningún negocio con ese celular. Si acabas de pagar, toca el botón de abajo para rellenar el cuestionario.');
           }
         }
       };
 
+      // CORREGIDO: Enlace limpio apuntando a la estructura de carpetas /reserva sin .html
       const customClientLink = useMemo(() => {
         if (!barberiaId) return '';
-        return `${window.location.origin}/reserva.html?id=${barberiaId}`;
+        return `${window.location.origin}/reserva?id=${barberiaId}`;
       }, [barberiaId]);
 
       const copyLinkToClipboard = () => {
@@ -187,13 +200,31 @@
         <div className="max-w-md mx-auto w-full px-4 py-6 flex flex-col min-h-screen justify-between">
           {!isAuthenticated ? (
             <div className="my-auto py-8 px-6 bg-slate-900/40 border border-slate-900 rounded-3xl space-y-6">
-              <h1 className="text-2xl font-extrabold text-center text-white">Acceso Administrador</h1>
-              <form onSubmit={handleLoginSubmit} className="space-y-4">
-                <input type="text" required placeholder="Nombre de la Barbería" value={barberiaName} onChange={(e) => setBarberiaName(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100" />
-                <input type="tel" required placeholder="Celular del Negocio" value={celular} onChange={(e) => setCelular(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100" />
-                <input type="password" required placeholder="Contraseña de Entrada" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-center tracking-widest text-slate-100" />
-                <button type="submit" className="w-full py-4 bg-purple-600 font-bold rounded-2xl text-sm shadow-lg">Entrar / Crear Cuenta</button>
+              <h1 className="text-2xl font-extrabold text-center text-white">
+                {isRegisterMode ? "📝 Cuestionario de Registro" : "Acceso Administrador"}
+              </h1>
+              <p className="text-xs text-center text-slate-400 -mt-4">
+                {isRegisterMode ? "Configura los accesos públicos de tu barbería" : "Ingresa para gestionar tus turnos activos"}
+              </p>
+              
+              <form onSubmit={handleAuthSubmit} className="space-y-4">
+                <input type="text" required placeholder="Nombre de la Barbería" value={barberiaName} onChange={(e) => setBarberiaName(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 outline-none" />
+                <input type="tel" required placeholder="Celular del Negocio" value={celular} onChange={(e) => setCelular(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 outline-none" />
+                <input type="password" required placeholder="Contraseña de Entrada" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-center tracking-widest text-slate-100 outline-none" />
+                
+                <button type="submit" className="w-full py-4 bg-purple-600 hover:bg-purple-700 font-bold rounded-2xl text-sm shadow-lg transition-all">
+                  {isRegisterMode ? "Finalizar y Crear Espacio" : "Entrar al Panel"}
+                </button>
               </form>
+
+              <div className="text-center pt-2 border-t border-slate-850">
+                <button 
+                  onClick={() => { setIsRegisterMode(!isRegisterMode); setBarberiaName(''); setCelular(''); setPassword(''); }} 
+                  className="text-xs text-purple-400 font-semibold hover:underline"
+                >
+                  {isRegisterMode ? "¿Ya tienes cuenta? Inicia Sesión" : "¿Acabas de pagar con Wompi? Regístrate aquí"}
+                </button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -232,9 +263,9 @@
                 </button>
                 {showManualForm && (
                   <form onSubmit={handleManualSubmit} className="space-y-3 pt-3 mt-2 border-t border-slate-850">
-                    <input type="text" required placeholder="Nombre Cliente" value={manualName} onChange={(e) => setManualName(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs" />
-                    <input type="tel" required placeholder="Celular Cliente" value={manualPhone} onChange={(e) => setManualPhone(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs" />
-                    <select value={manualDate} onChange={(e) => { setManualDate(e.target.value); setManualTime(''); }} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-400">
+                    <input type="text" required placeholder="Nombre Cliente" value={manualName} onChange={(e) => setManualName(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs outline-none" />
+                    <input type="tel" required placeholder="Celular Cliente" value={manualPhone} onChange={(e) => setManualPhone(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs outline-none" />
+                    <select value={manualDate} onChange={(e) => { setManualDate(e.target.value); setManualTime(''); }} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-400 outline-none">
                       {daysList.map(d => <option key={d.isoString} value={d.isoString}>{d.dayName} {d.dayNumber}</option>)}
                     </select>
                     <div className="grid grid-cols-3 gap-1 max-h-[100px] overflow-y-auto custom-scrollbar p-1 bg-slate-950 rounded-xl border border-slate-850">
@@ -286,7 +317,7 @@
 
               {checkoutId && (
                 <form onSubmit={handleChargeConfirm} className="bg-slate-900 border border-purple-500/30 p-3 rounded-xl flex gap-2">
-                  <input type="number" required placeholder="Valor Cobrado" value={chargeInput} onChange={(e) => setChargeInput(e.target.value)} className="flex-1 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs" />
+                  <input type="number" required placeholder="Valor Cobrado" value={chargeInput} onChange={(e) => setChargeInput(e.target.value)} className="flex-1 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs outline-none" />
                   <button type="submit" className="px-3 bg-purple-600 text-xs font-bold rounded-lg">Confirmar</button>
                 </form>
               )}
