@@ -7,79 +7,77 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>[v-cloak] { display: none; }</style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased">
   <div id="app" class="max-w-md mx-auto px-6 py-10 space-y-8" v-cloak>
     
     <header class="text-center space-y-4">
-      <h1 class="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">{{ bizName }}</h1>
-      <div v-if="pausado" class="mt-4 p-6 bg-rose-500/10 border border-rose-500/20 rounded-3xl">
-        <p class="text-rose-400 font-bold text-sm">No estamos recibiendo citas actualmente.</p>
+      <h1 class="text-4xl font-black italic uppercase tracking-tighter leading-none text-white">{{ bizName }}</h1>
+      <div v-if="pausado" class="mt-4 p-6 bg-rose-500/10 border border-rose-500/20 rounded-[2rem]">
+        <p class="text-rose-400 font-bold text-xs uppercase tracking-widest italic">Cerrado temporalmente</p>
       </div>
     </header>
 
-    <!-- NAVEGACION -->
-    <div class="flex bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
-      <button @click="tab = 'reserva'" :class="tab === 'reserva' ? 'bg-purple-600 text-white' : 'text-slate-500'" class="flex-1 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all">Reservar</button>
-      <button @click="tab = 'consulta'" :class="tab === 'consulta' ? 'bg-purple-600 text-white' : 'text-slate-500'" class="flex-1 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all">Mi Cita</button>
+    <!-- NAVEGACIÓN -->
+    <div class="flex bg-slate-900/50 p-1.5 rounded-2xl border border-slate-800">
+      <button @click="tab = 'reserva'" :class="tab === 'reserva' ? 'bg-purple-600 text-white' : 'text-slate-500'" class="flex-1 py-3 rounded-xl font-black uppercase italic text-[10px] tracking-widest transition-all">Reservar</button>
+      <button @click="tab = 'consulta'" :class="tab === 'consulta' ? 'bg-purple-600 text-white' : 'text-slate-500'" class="flex-1 py-3 rounded-xl font-black uppercase italic text-[10px] tracking-widest transition-all">Mi Cita</button>
     </div>
 
     <!-- PESTAÑA: AGENDAR -->
-    <div v-if="tab === 'reserva' && !pausado" class="space-y-6">
+    <div v-if="tab === 'reserva' && !pausado" class="space-y-6 animate-in fade-in duration-500">
       <div class="space-y-2">
-        <label class="text-[10px] font-bold text-slate-500 uppercase px-1">1. ¿Qué día vienes?</label>
+        <label class="text-[9px] font-black italic text-slate-500 uppercase tracking-widest px-1">1. Elige el Día</label>
         <input v-model="form.date" type="date" @change="fetchOcupados" :min="minDate" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
       </div>
 
       <div v-if="form.date" class="space-y-3">
-        <label class="text-[10px] font-bold text-slate-500 uppercase px-1">2. ¿A qué hora?</label>
+        <label class="text-[9px] font-black italic text-slate-500 uppercase tracking-widest px-1">2. ¿A qué hora?</label>
         <div class="grid grid-cols-3 gap-2">
           <button type="button" v-for="h in availableSlots" :key="h" @click="form.time = h" 
-            :class="form.time === h ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-400'"
-            class="py-3 border rounded-xl text-[10px] font-bold transition-all">
+            :class="form.time === h ? 'bg-purple-600 border-purple-500 text-white scale-95' : 'bg-slate-900 border-slate-800 text-slate-400'"
+            class="py-3 border rounded-xl text-[10px] font-black italic transition-all">
             {{ h }}
           </button>
         </div>
-        <p v-if="availableSlots.length === 0" class="text-center text-[10px] text-rose-400 italic">No hay espacios para este día.</p>
       </div>
 
-      <div v-if="form.time" class="space-y-3 pt-4 border-t border-slate-900 animate-in fade-in duration-500">
-        <input v-model="form.cli" type="text" placeholder="Tu nombre completo" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
+      <div v-if="form.time" class="space-y-3 pt-4 border-t border-slate-900 animate-in zoom-in duration-500">
+        <input v-model="form.cli" type="text" placeholder="Tu nombre" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
         <input v-model="form.tel" type="tel" placeholder="Tu celular" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
-        <button @click="save" class="w-full py-5 bg-purple-600 rounded-3xl font-black text-sm shadow-xl shadow-purple-600/30">CONFIRMAR TURNO</button>
+        <button @click="save" class="w-full py-5 bg-purple-600 rounded-3xl font-black italic text-sm tracking-widest uppercase shadow-xl shadow-purple-600/30">Agendar Turno</button>
       </div>
     </div>
 
     <!-- PESTAÑA: CONSULTA -->
     <div v-if="tab === 'consulta'" class="space-y-6">
       <div class="flex gap-2">
-        <input v-model="searchTel" type="tel" placeholder="Tu celular" class="flex-1 p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
+        <input v-model="searchTel" type="tel" placeholder="Celular" class="flex-1 p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
         <button @click="consultar" class="bg-purple-600 px-6 rounded-2xl font-bold">🔍</button>
       </div>
-      <div v-for="c in misCitas" :key="c.id" class="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
+      <div v-for="c in misCitas" :key="c.id" class="bg-slate-900 p-6 rounded-[2rem] border border-slate-800 space-y-4 shadow-xl">
         <div class="flex justify-between items-start">
-          <p class="font-black text-white leading-none">{{ c.hora_turno }}<br><span class="text-[10px] text-slate-500 font-bold uppercase">{{ c.fecha_turno }}</span></p>
-          <span :class="c.estado === 'paid' ? 'text-emerald-400' : 'text-amber-400'" class="text-[9px] font-bold uppercase">{{ c.estado === 'paid' ? 'Pagado' : 'Pendiente' }}</span>
+          <p class="font-black italic text-white uppercase">{{ c.hora_turno }}<br><span class="text-[9px] text-slate-500">{{ c.fecha_turno }}</span></p>
+          <span :class="c.estado === 'paid' ? 'text-emerald-400' : 'text-amber-400'" class="text-[9px] font-black uppercase italic tracking-widest">{{ c.estado === 'paid' ? 'Confirmado' : 'Pendiente' }}</span>
         </div>
-        <button @click="cancelar(c.id)" class="w-full py-2 bg-slate-950 text-rose-500 rounded-xl text-[10px] font-bold border border-rose-900/20 uppercase tracking-widest">Cancelar Turno</button>
+        <button @click="cancelar(c.id)" class="w-full py-3 bg-slate-950 text-rose-500 rounded-xl text-[10px] font-black italic border border-rose-900/20 uppercase">Cancelar Turno</button>
       </div>
     </div>
 
-    <!-- MODAL DE ÉXITO ELEGANTE -->
-    <div v-if="successModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-in fade-in duration-300">
+    <!-- MODAL DE ÉXITO PREMIUM -->
+    <div v-if="successModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-6 z-50">
       <div class="bg-slate-900 border border-purple-500/30 p-10 rounded-[3rem] text-center space-y-6 shadow-2xl max-w-xs w-full animate-in zoom-in duration-300">
-        <div class="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner animate-bounce">✓</div>
+        <div class="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">✓</div>
         <div class="space-y-2">
-          <h2 class="text-2xl font-black text-white uppercase tracking-tighter italic">¡Turno Agendado!</h2>
-          <p class="text-slate-400 text-sm">Te esperamos con gusto. Hemos guardado tu espacio correctamente.</p>
+          <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">¡Turno Agendado!</h2>
+          <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-relaxed">Tu lugar ha sido reservado con éxito en {{ bizName }}.</p>
         </div>
-        <button @click="successModal = false; location.reload()" class="w-full py-4 bg-purple-600 rounded-2xl font-bold shadow-lg shadow-purple-600/30">EXCELENTE</button>
+        <button @click="successModal = false; location.reload()" class="w-full py-4 bg-purple-600 rounded-2xl font-black italic uppercase text-xs tracking-[0.2em] shadow-lg">Excelente</button>
       </div>
     </div>
 
   </div>
-
-  <style>[v-cloak] { display: none; }</style>
 
   <script>
     const { createApp, ref, computed, onMounted } = Vue;
@@ -103,7 +101,6 @@
           const slots = [];
           let current = new Date(`2024-01-01T${bizConfig.value.inicio}`);
           const end = new Date(`2024-01-01T${bizConfig.value.fin}`);
-          
           while(current < end) {
             const timeStr = current.toTimeString().slice(0, 5);
             if(!occupiedSlots.value.includes(timeStr)) slots.push(timeStr);
@@ -132,10 +129,8 @@
         };
 
         const save = async () => {
-          if(!form.value.cli || !form.value.tel) return alert("Completa tus datos");
           const { error } = await sb.from('citas').insert([{ barberia_id: bizId.value, nombre_cliente: form.value.cli, celular_cliente: form.value.tel, fecha_turno: form.value.date, hora_turno: form.value.time, estado: 'pending' }]);
           if(!error) successModal.value = true;
-          else alert("Error al agendar");
         };
 
         const consultar = async () => {
