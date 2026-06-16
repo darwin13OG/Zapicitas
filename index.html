@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZapiCitas | Automatiza tu Agenda de Forma Simple</title>
+  <!-- Importamos Tailwind CSS v4 -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
+
+  <!-- SECCIÓN HERO (BIENVENIDA) -->
+  <section class="w-full py-20 px-6 max-w-xl mx-auto text-center flex flex-col gap-6">
+    <!-- Etiqueta de Precio -->
+    <div>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+        ⚡ Plan Único Ilimitado: $20.000/mes
+      </span>
+    </div>
+
+    <!-- Título Principal -->
+    <h1 class="text-4xl font-extrabold text-white tracking-tight leading-tight">
+      Automatiza tu agenda. <br>
+      <span class="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">Multiplica tus clientes.</span>
+    </h1>
+
+    <!-- Subtítulo -->
+    <p class="text-base text-slate-400 leading-relaxed max-w-md mx-auto">
+      ZapiCitas es el sistema de agendamiento más rápido y sencillo para tu negocio. Sin llamadas, sin mensajes acumulados en WhatsApp y controlado 100% desde tu celular.
+    </p>
+
+    <!-- Botón Principal que redirige al Registro -->
+    <div class="mt-4">
+      <a href="/admin" class="inline-block w-full py-4 px-8 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-lg shadow-lg shadow-purple-600/30 transition-all text-center">
+        Registrar mi Negocio
+      </a>
+    </div>
+  </section>
+
+  <!-- SECCIÓN BENEFICIOS (NUNCA APIÑADOS) -->
+  <section class="w-full py-12 px-6 max-w-xl mx-auto flex flex-col gap-12">
+    
+    <!-- Beneficio 1 -->
+    <div class="flex flex-col gap-3 p-6 rounded-2xl bg-slate-900/50 border border-slate-900">
+      <div class="text-purple-400 font-bold text-xl flex items-center gap-2">
+        <span>📱</span> Adiós al WhatsApp saturado
+      </div>
+      <p class="text-sm text-slate-400 leading-relaxed">
+        Tus clientes reservan su propio turno en 3 toques desde un enlace personalizado, sin que tú tengas que pausar tu trabajo para contestar mensajes.
+      </p>
+    </div>
+
+    <!-- Beneficio 2 -->
+    <div class="flex flex-col gap-3 p-6 rounded-2xl bg-slate-900/50 border border-slate-900">
+      <div class="text-purple-400 font-bold text-xl flex items-center gap-2">
+        <span>⚡</span> Panel Móvil Ultra-Limpio
+      </div>
+      <p class="text-sm text-slate-400 leading-relaxed">
+        Una interfaz diseñada exclusivamente para pantallas de celulares. Revisa tus citas del día, cancela o agrega nuevos turnos de forma cómoda.
+      </p>
+    </div>
+
+    <!-- Beneficio 3 -->
+    <div class="flex flex-col gap-3 p-6 rounded-2xl bg-slate-900/50 border border-slate-900">
+      <div class="text-purple-400 font-bold text-xl flex items-center gap-2">
+        <span>🛡️</span> Cero Pérdidas de Tiempo
+      </div>
+      <p class="text-sm text-slate-400 leading-relaxed">
+        El sistema mantiene organizada tu jornada automáticamente. Evita que los clientes olviden sus citas y asegura los ingresos de tu día.
+      </p>
+    </div>
+
+  </section>
+
+  <!-- SECCIÓN TARIFAS COMERCIALES -->
+  <section class="w-full py-16 px-6 max-w-xl mx-auto text-center flex flex-col gap-8">
+    <div class="flex flex-col gap-2">
+      <h2 class="text-2xl font-bold text-white">Planes Hechos para Crecer</h2>
+      <p class="text-sm text-slate-400">Elige la forma de pago que más te convenga. Todo ilimitado.</p>
+    </div>
+
+    <!-- Contenedor de Tarjetas de Precios -->
+    <div class="flex flex-col gap-6 text-left">
+      <!-- Tarjeta Mensual -->
+      <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 flex flex-col gap-4">
+        <div>
+          <span class="text-xs font-bold tracking-wider text-purple-400 uppercase">Suscripción Mensual</span>
+          <div class="text-3xl font-extrabold text-white mt-1">$20.000 <span class="text-sm font-normal text-slate-500">COP / mes</span></div>
+        </div>
+        <p class="text-xs text-slate-400">Control total e inmediato de tu agenda mes a mes, sin contratos de permanencia.</p>
+      </div>
+
+      <!-- Tarjeta Anual -->
+      <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-purple-600 flex flex-col gap-4 relative">
+        <span class="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-600 text-white">Ahorra 2 Meses</span>
+        <div>
+          <span class="text-xs font-bold tracking-wider text-purple-400 uppercase">Plan Anual Oro</span>
+          <div class="text-3xl font-extrabold text-white mt-1">$200.000 <span class="text-sm font-normal text-slate-500">COP / año</span></div>
+        </div>
+        <p class="text-xs text-slate-400">Asegura tu plataforma durante todo el año, ahorra $40.000 pesos y olvídate de pagos mensuales.</p>
+      </div>
+    </div>
+
+    <!-- Botón Inferior de Cierre -->
+    <div class="mt-4">
+      <a href="/admin" class="inline-block w-full py-4 px-8 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white font-bold transition-all text-center">
+        Comenzar mi Prueba Ilimitada
+      </a>
+    </div>
+  </section>
+
+  <!-- PIE DE PÁGINA -->
+  <footer class="w-full py-8 text-center text-xs text-slate-600 border-t border-slate-900 max-w-xl mx-auto">
+    &copy; 2026 ZapiCitas. Todos los derechos reservados. <br>
+    Simplicidad extrema para el control de tu negocio.
+  </footer>
+
+</body>
+</html>
