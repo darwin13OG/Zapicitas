@@ -3,74 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ZapiCitas | Reserva tu Turno</title>
+  <title>Reserva tu Turno | ZapiCitas</title>
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useMemo, useEffect } = React;
-
-    const SUPABASE_URL = "https://tsasorwwbbscnbvoyyhf.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzYXNvcnd3YmJzY25idm95eWhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTg5NjEsImV4cCI6MjA5NzE3NDk2MX0.-A0fl15WmXcnU-81iUazvy-GBrS22ktaKcoQx56jmZ8";
-    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { useState, useEffect } = React;
+    const sb = supabase.createClient("https://tsasorwwbbscnbvoyyhf.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzYXNvcnd3YmJzY25idm95eWhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTg5NjEsImV4cCI6MjA5NzE3NDk2MX0.-A0fl15WmXcnU-81iUazvy-GBrS22ktaKcoQx56jmZ8");
 
     function App() {
-      const [barberiaId, setBarberiaId] = useState('');
-      const [barberiaName, setBarberiaName] = useState('Barbería');
-      const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-      const [selectedTime, setSelectedTime] = useState('');
-      const [clientName, setClientName] = useState('');
-      const [clientPhone, setClientPhone] = useState('');
-      const [success, setSuccess] = useState(false);
+      const [bid, setBid] = useState('');
+      const [name, setName] = useState('Cargando...');
+      const [form, setForm] = useState({ date: '', time: '', cli: '', tel: '' });
+      const [done, setDone] = useState(false);
 
       useEffect(() => {
         const id = new URLSearchParams(window.location.search).get('id');
         if (id) {
-          setBarberiaId(id);
-          supabase.from('perfil_barberia').select('nombre_negocio').eq('id', id).single()
-            .then(({ data }) => data && setBarberiaName(data.nombre_negocio));
+          setBid(id);
+          sb.from('perfil_barberia').select('nombre_negocio').eq('id', id).single().then(({ data }) => {
+            if(data) setName(data.nombre_negocio);
+          });
         }
       }, []);
 
-      const handleReserva = async (e) => {
+      const save = async (e) => {
         e.preventDefault();
-        const { error } = await supabase.from('citas').insert([{ barberia_id: barberiaId, nombre_cliente: clientName, celular_cliente: clientPhone, fecha_turno: selectedDate, hora_turno: selectedTime, estado: 'pending' }]);
-        if (!error) setSuccess(true);
+        const { error } = await sb.from('citas').insert([{ barberia_id: bid, nombre_cliente: form.cli, celular_cliente: form.tel, fecha_turno: form.date, hora_turno: form.time, estado: 'pending' }]);
+        if(!error) setDone(true);
+        else alert("Error al agendar");
       };
 
-      if (success) return (
-        <div className="max-w-md mx-auto p-10 text-center space-y-4">
-          <h1 className="text-2xl font-bold text-emerald-400">¡Turno Agendado!</h1>
-          <p className="text-slate-400">Gracias {clientName}, te esperamos.</p>
-          <button onClick={() => location.reload()} className="w-full py-3 bg-purple-600 rounded-xl">Volver</button>
-        </div>
-      );
+      if(done) return <div className="max-w-md mx-auto py-20 text-center space-y-6 px-6"><div className="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl">✓</div><h1 className="text-2xl font-bold">¡Reserva Exitosa!</h1><p className="text-slate-400">Tu turno ha sido agendado correctamente en {name}.</p><button onClick={()=>location.reload()} className="w-full py-4 bg-purple-600 rounded-xl font-bold">Volver</button></div>;
 
       return (
-        <div className="max-w-md mx-auto px-6 py-10 space-y-8">
-          <header className="text-center">
-            <h1 className="text-3xl font-black">{barberiaName}</h1>
-            <p className="text-slate-500">Reserva tu espacio rápido</p>
+        <div className="max-w-md mx-auto px-6 py-12 space-y-8">
+          <header className="text-center space-y-2">
+            <h1 className="text-3xl font-black text-white">{name}</h1>
+            <p className="text-slate-500 text-sm italic">Agenda tu cita en segundos</p>
           </header>
-
-          <form onSubmit={handleReserva} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Día:</label>
-              <input type="date" required value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Hora:</label>
-              <input type="time" required value={selectedTime} onChange={e => setSelectedTime(e.target.value)} className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none" />
-            </div>
-            <input type="text" placeholder="Tu nombre" required value={clientName} onChange={e => setClientName(e.target.value)} className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none" />
-            <input type="tel" placeholder="Tu celular" required value={clientPhone} onChange={e => setClientPhone(e.target.value)} className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none" />
-            <button type="submit" className="w-full py-4 bg-purple-600 rounded-2xl font-bold">Agendar Ahora</button>
+          <form onSubmit={save} className="space-y-4">
+            <div className="space-y-1"><label className="text-[10px] font-bold text-slate-500 uppercase">¿Qué día?</label><input type="date" required className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setForm({...form, date: e.target.value})} /></div>
+            <div className="space-y-1"><label className="text-[10px] font-bold text-slate-500 uppercase">¿A qué hora?</label><input type="time" required className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setForm({...form, time: e.target.value})} /></div>
+            <input type="text" placeholder="Tu Nombre Completo" required className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setForm({...form, cli: e.target.value})} />
+            <input type="tel" placeholder="Tu Celular" required className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setForm({...form, tel: e.target.value})} />
+            <button className="w-full py-4 bg-purple-600 hover:bg-purple-700 rounded-2xl font-bold shadow-lg shadow-purple-600/30 active:scale-95 transition-all">Agendar Cita Ahora</button>
           </form>
         </div>
       );
