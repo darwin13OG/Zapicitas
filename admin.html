@@ -10,8 +10,11 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
-  <div id="root"></div>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div id="root">
+    <!-- Este mensaje solo se ve si React falla al cargar -->
+    <div class="flex items-center justify-center min-h-screen text-slate-500 text-sm">Cargando Panel...</div>
+  </div>
 
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
@@ -20,83 +23,93 @@
 
     function App() {
       const [auth, setAuth] = useState(false);
-      const [reg, setReg] = useState(new URLSearchParams(window.location.search).has('id'));
-      const [data, setData] = useState({ id: '', name: '', tel: '', pass: '' });
+      const [isReg, setIsReg] = useState(() => {
+        const p = new URLSearchParams(window.location.search);
+        return p.has('id') || p.get('mode') === 'register';
+      });
+      const [bizData, setBizData] = useState({ id: '', name: '', tel: '', pass: '' });
       const [citas, setCitas] = useState([]);
-      const [loading, setLoading] = useState(false);
+      const [copied, setCopied] = useState(false);
 
-      const loadCitas = async (bid) => {
-        const { data: res } = await sb.from('citas').select('*').eq('barberia_id', bid).order('fecha_turno', { ascending: true });
-        if(res) setCitas(res);
+      const loadCitas = async (bId) => {
+        const { data } = await sb.from('citas').select('*').eq('barberia_id', bId);
+        if(data) setCitas(data);
       };
 
       const handleAuth = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        if(reg) {
-          const { data: n, error } = await sb.from('perfil_barberia').insert([{ nombre_negocio: data.name, celular: data.tel, clave_acceso: data.pass }]).select().single();
-          if(n) { setData({ ...data, id: n.id, name: n.nombre_negocio }); setAuth(true); loadCitas(n.id); }
-          else alert("Error: Verifica que el número no esté registrado.");
+        if(isReg) {
+          const { data: n } = await sb.from('perfil_barberia').insert([{ nombre_negocio: bizData.name, celular: bizData.tel, clave_acceso: bizData.pass }]).select().single();
+          if(n) { setBizData({ ...bizData, id: n.id, name: n.nombre_negocio }); setAuth(true); loadCitas(n.id); }
+          else alert("Error al registrar el negocio.");
         } else {
-          const { data: x } = await sb.from('perfil_barberia').select('*').eq('celular', data.tel).single();
-          if(x && x.clave_acceso === data.pass) { setData({ ...data, id: x.id, name: x.nombre_negocio }); setAuth(true); loadCitas(x.id); }
+          const { data: x } = await sb.from('perfil_barberia').select('*').eq('celular', bizData.tel).single();
+          if(x && x.clave_acceso === bizData.pass) { setBizData({ ...bizData, id: x.id, name: x.nombre_negocio }); setAuth(true); loadCitas(x.id); }
           else alert("Datos incorrectos.");
         }
-        setLoading(false);
       };
+
+      const dailySales = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+        return citas.filter(c => c.fecha_turno === today && c.estado === 'paid')
+          .reduce((acc, c) => acc + Number(c.valor_cobrado || 0), 0);
+      }, [citas]);
 
       if(!auth) return (
         <div className="max-w-md mx-auto py-20 px-6">
-          <div className="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 space-y-6 shadow-2xl">
-            <h2 className="text-2xl font-bold text-center">{reg ? '📝 Registro de Negocio' : '🔐 Panel de Control'}</h2>
+          <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 space-y-6">
+            <h2 className="text-2xl font-bold text-center">{isReg ? '📝 Nuevo Registro' : 'Panel Administrador'}</h2>
             <form onSubmit={handleAuth} className="space-y-4">
-              {reg && <input type="text" placeholder="Nombre del Negocio" required className="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setData({...data, name: e.target.value})} />}
-              <input type="tel" placeholder="Celular" required className="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setData({...data, tel: e.target.value})} />
-              <input type="password" placeholder="Contraseña" required className="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setData({...data, pass: e.target.value})} />
-              <button disabled={loading} className="w-full py-4 bg-purple-600 rounded-xl font-bold shadow-lg shadow-purple-600/20 active:scale-95 transition-all">
-                {loading ? 'Cargando...' : (reg ? 'Crear mi Cuenta' : 'Entrar')}
+              {isReg && <input type="text" placeholder="Nombre del Negocio" required className="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none" onChange={e=>setBizData({...bizData, name: e.target.value})} />}
+              <input type="tel" placeholder="Celular" required className="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none" onChange={e=>setBizData({...bizData, tel: e.target.value})} />
+              <input type="password" placeholder="Contraseña" required className="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none" onChange={e=>setBizData({...bizData, pass: e.target.value})} />
+              <button className="w-full py-4 bg-purple-600 rounded-xl font-bold shadow-lg shadow-purple-600/20">
+                {isReg ? 'Finalizar Registro' : 'Entrar al Panel'}
               </button>
             </form>
-            <button onClick={()=>setReg(!reg)} className="w-full text-xs text-purple-400 font-bold hover:underline">
-              {reg ? '¿Ya tienes cuenta? Entra aquí' : '¿Acabas de pagar? Regístrate aquí'}
+            <button onClick={()=>setIsReg(!isReg)} className="w-full text-xs text-purple-400">
+              {isReg ? '¿Ya tienes cuenta? Inicia Sesión' : '¿Acabas de pagar? Regístrate aquí'}
             </button>
           </div>
         </div>
       );
 
+      const clientLink = `${window.location.origin}/reserva?id=${bizData.id}`;
+
       return (
         <div className="max-w-md mx-auto p-4 space-y-6">
-          <header className="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex justify-between items-center shadow-lg">
-            <div>
-              <h1 className="font-bold text-lg text-white">💼 {data.name}</h1>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest">Administrador</p>
-            </div>
-            <button onClick={()=>location.reload()} className="text-[10px] bg-slate-800 px-3 py-1.5 rounded-lg text-slate-300">Salir</button>
+          <header className="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+            <h2 className="font-bold">💼 {bizData.name}</h2>
+            <button onClick={()=>location.reload()} className="text-[10px] bg-slate-800 px-3 py-1 rounded-lg">Salir</button>
           </header>
 
-          <div className="bg-gradient-to-br from-purple-900/30 to-slate-950 p-6 rounded-3xl border border-purple-500/20 text-center space-y-4">
-            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">Link para tus clientes</span>
-            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[10px] font-mono truncate text-slate-500">
-              {`${window.location.origin}/reserva?id=${data.id}`}
-            </div>
-            <button onClick={()=>{navigator.clipboard.writeText(`${window.location.origin}/reserva?id=${data.id}`); alert('Link Copiado!');}} className="w-full py-3 bg-purple-600 rounded-xl text-xs font-bold shadow-lg shadow-purple-600/30">COPIAR LINK DE RESERVAS</button>
+          <div className="bg-gradient-to-br from-purple-900/20 to-slate-950 p-5 rounded-3xl border border-purple-500/20 text-center space-y-3">
+            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">Link de Reservas</span>
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[10px] font-mono truncate text-slate-500">{clientLink}</div>
+            <button onClick={()=>{navigator.clipboard.writeText(clientLink); setCopied(true); setTimeout(()=>setCopied(false), 2000)}} className="w-full py-2.5 bg-purple-600 rounded-xl text-xs font-bold transition-all">
+              {copied ? "COPIADO ✓" : "COPIAR LINK PARA CLIENTES"}
+            </button>
+          </div>
+
+          <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+            <span className="text-xs font-bold text-slate-500">VENTAS HOY</span>
+            <span className="text-lg font-black text-emerald-400">${dailySales.toLocaleString()}</span>
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-500 uppercase px-1">Próximas Citas</h3>
-            {citas.length === 0 ? (
-              <div className="py-20 text-center text-xs text-slate-700 bg-slate-900/20 rounded-2xl border border-dashed border-slate-800">No hay citas registradas aún</div>
-            ) : (
-              citas.map(c => (
-                <div key={c.id} className="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex justify-between items-center shadow-sm">
-                  <div>
-                    <p className="text-sm font-bold text-white">{c.nombre_cliente}</p>
-                    <p className="text-[10px] text-purple-400 font-bold">{c.fecha_turno} | {c.hora_turno}</p>
-                  </div>
-                  <button onClick={async () => { if(confirm('¿Eliminar cita?')){ await sb.from('citas').delete().eq('id', c.id); loadCitas(data.id); } }} className="text-slate-600 hover:text-rose-500 transition-colors">✕</button>
+            <h3 className="text-xs font-bold text-slate-400 px-1 uppercase">Citas Agendadas</h3>
+            {citas.map(c => (
+              <div key={c.id} className="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-bold">{c.nombre_cliente}</p>
+                  <p className="text-[10px] text-purple-400 font-bold">{c.fecha_turno} | {c.hora_turno}</p>
                 </div>
-              ))
-            )}
+                <button onClick={async ()=>{
+                  const val = prompt('Valor cobrado:');
+                  if(val) { await sb.from('citas').update({ estado: 'paid', valor_cobrado: Number(val) }).eq('id', c.id); loadCitas(bizData.id); }
+                }} className="text-[10px] bg-emerald-600 px-3 py-1.5 rounded-lg font-bold">Cobrar</button>
+              </div>
+            ))}
           </div>
         </div>
       );
