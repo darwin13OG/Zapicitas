@@ -4,61 +4,73 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Reserva tu Turno | ZapiCitas</title>
-  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
-  <div id="root"></div>
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased font-sans">
+  <div id="app" v-cloak>
+    <div v-if="success" class="max-w-md mx-auto py-20 text-center space-y-6 px-6">
+      <div class="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl">✓</div>
+      <h1 class="text-2xl font-bold">¡Reserva Exitosa!</h1>
+      <p class="text-slate-400">Tu turno ha sido agendado correctamente en {{ bizName }}.</p>
+      <button @click="reset" class="w-full py-4 bg-purple-600 rounded-xl font-bold">Aceptar</button>
+    </div>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
+    <div v-else class="max-w-md mx-auto px-6 py-12 space-y-8">
+      <header class="text-center space-y-2">
+        <h1 class="text-3xl font-black text-white">{{ bizName }}</h1>
+        <p class="text-slate-500 text-sm">Agenda tu cita rápido y fácil</p>
+      </header>
+      <form @submit.prevent="save" class="space-y-4">
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-500 uppercase">¿Qué día?</label>
+          <input v-model="form.date" type="date" required class="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none">
+        </div>
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-500 uppercase">¿A qué hora?</label>
+          <input v-model="form.time" type="time" required class="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none">
+        </div>
+        <input v-model="form.cli" type="text" placeholder="Tu Nombre Completo" required class="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none">
+        <input v-model="form.tel" type="tel" placeholder="Tu Celular" required class="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none">
+        <button type="submit" class="w-full py-4 bg-purple-600 hover:bg-purple-700 rounded-2xl font-bold shadow-lg shadow-purple-600/30 active:scale-95 transition-all">Agendar Ahora</button>
+      </form>
+    </div>
+  </div>
+
+  <style>[v-cloak] { display: none; }</style>
+
+  <script>
+    const { createApp, ref, onMounted } = Vue;
     const sb = supabase.createClient("https://tsasorwwbbscnbvoyyhf.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzYXNvcnd3YmJzY25idm95eWhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTg5NjEsImV4cCI6MjA5NzE3NDk2MX0.-A0fl15WmXcnU-81iUazvy-GBrS22ktaKcoQx56jmZ8");
 
-    function App() {
-      const [bid, setBid] = useState('');
-      const [name, setName] = useState('Cargando...');
-      const [form, setForm] = useState({ date: '', time: '', cli: '', tel: '' });
-      const [done, setDone] = useState(false);
+    createApp({
+      setup() {
+        const bizId = ref('');
+        const bizName = ref('Cargando...');
+        const success = ref(false);
+        const form = ref({ date: '', time: '', cli: '', tel: '' });
 
-      useEffect(() => {
-        const id = new URLSearchParams(window.location.search).get('id');
-        if (id) {
-          setBid(id);
-          sb.from('perfil_barberia').select('nombre_negocio').eq('id', id).single().then(({ data }) => {
-            if(data) setName(data.nombre_negocio);
-          });
-        }
-      }, []);
+        onMounted(async () => {
+          const id = new URLSearchParams(window.location.search).get('id');
+          if (id) {
+            bizId.value = id;
+            const { data } = await sb.from('perfil_barberia').select('nombre_negocio').eq('id', id).single();
+            if(data) bizName.value = data.nombre_negocio;
+          }
+        });
 
-      const save = async (e) => {
-        e.preventDefault();
-        const { error } = await sb.from('citas').insert([{ barberia_id: bid, nombre_cliente: form.cli, celular_cliente: form.tel, fecha_turno: form.date, hora_turno: form.time, estado: 'pending' }]);
-        if(!error) setDone(true);
-        else alert("Error al agendar");
-      };
+        const save = async () => {
+          const { error } = await sb.from('citas').insert([{ barberia_id: bizId.value, nombre_cliente: form.value.cli, celular_cliente: form.value.tel, fecha_turno: form.value.date, hora_turno: form.value.time, estado: 'pending' }]);
+          if(!error) success.value = true;
+          else alert("Error al agendar");
+        };
 
-      if(done) return <div className="max-w-md mx-auto py-20 text-center space-y-6 px-6"><div className="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl">✓</div><h1 className="text-2xl font-bold">¡Reserva Exitosa!</h1><p className="text-slate-400">Tu turno ha sido agendado correctamente en {name}.</p><button onClick={()=>location.reload()} className="w-full py-4 bg-purple-600 rounded-xl font-bold">Volver</button></div>;
+        const reset = () => location.reload();
 
-      return (
-        <div className="max-w-md mx-auto px-6 py-12 space-y-8">
-          <header className="text-center space-y-2">
-            <h1 className="text-3xl font-black text-white">{name}</h1>
-            <p className="text-slate-500 text-sm italic">Agenda tu cita en segundos</p>
-          </header>
-          <form onSubmit={save} className="space-y-4">
-            <div className="space-y-1"><label className="text-[10px] font-bold text-slate-500 uppercase">¿Qué día?</label><input type="date" required className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setForm({...form, date: e.target.value})} /></div>
-            <div className="space-y-1"><label className="text-[10px] font-bold text-slate-500 uppercase">¿A qué hora?</label><input type="time" required className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setForm({...form, time: e.target.value})} /></div>
-            <input type="text" placeholder="Tu Nombre Completo" required className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setForm({...form, cli: e.target.value})} />
-            <input type="tel" placeholder="Tu Celular" required className="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600" onChange={e=>setForm({...form, tel: e.target.value})} />
-            <button className="w-full py-4 bg-purple-600 hover:bg-purple-700 rounded-2xl font-bold shadow-lg shadow-purple-600/30 active:scale-95 transition-all">Agendar Cita Ahora</button>
-          </form>
-        </div>
-      );
-    }
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        return { bizName, form, success, save, reset };
+      }
+    }).mount('#app');
   </script>
 </body>
 </html>
