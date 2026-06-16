@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZapiCitas | Automatiza tu Agenda de Forma Simple</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  
+  <script type="text/javascript" src="https://checkout.epayco.co/checkout.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
+
+  <section class="w-full py-20 px-6 max-w-xl mx-auto text-center flex flex-col gap-6">
+    <div>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+        ⚡ Plan Único Ilimitado: $20.000/mes
+      </span>
+    </div>
+
+    <h1 class="text-4xl font-extrabold text-white tracking-tight leading-tight">
+      Automatiza tu agenda. <br>
+      <span class="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">Multiplica tus clientes.</span>
+    </h1>
+
+    <p class="text-base text-slate-400 leading-relaxed">
+      La plataforma de agendamiento diseñada para barberías que elimina los mensajes de WhatsApp a mitad del corte. Tus clientes agendan solos en 20 segundos.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-3 justify-center mt-2">
+      <a href="/reserva.html" class="px-6 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm shadow-lg shadow-purple-600/10 transition-all">Ver Demo Cliente</a>
+      <a href="/admin.html" class="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 font-bold text-sm transition-all">Acceso Administrador</a>
+    </div>
+  </section>
+
+  <section class="w-full py-12 px-6 max-w-xl mx-auto flex flex-col gap-4">
+    <div class="p-5 rounded-2xl bg-slate-900/40 border border-slate-900 flex items-start gap-4">
+      <div class="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/10 shrink-0">⏰</div>
+      <div>
+        <h3 class="text-sm font-bold text-white">Bloques Automáticos</h3>
+        <p class="text-xs text-slate-400 mt-1">Horarios dinámicos de 30 minutos. Horas ocupadas se bloquean de inmediato.</p>
+      </div>
+    </div>
+
+    <div class="p-5 rounded-2xl bg-slate-900/40 border border-slate-900 flex items-start gap-4">
+      <div class="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/10 shrink-0">📊</div>
+      <div>
+        <h3 class="text-sm font-bold text-white">Módulo de Ventas Integrado</h3>
+        <p class="text-xs text-slate-400 mt-1">Lleva el control de caja diario y mensual. Registra cobros de tus servicios al instante.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="w-full py-16 px-6 max-w-xl mx-auto border-t border-slate-900 flex flex-col gap-8">
+    <div class="text-center space-y-2">
+      <h2 class="text-2xl font-black text-white">Planes Listos para tu Negocio</h2>
+      <p class="text-xs text-slate-400">Paga de forma segura usando Nequi, PSE o Tarjeta de Crédito.</p>
+    </div>
+
+    <div class="grid gap-6">
+      <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-900 flex flex-col gap-4">
+        <div>
+          <span class="text-xs font-bold tracking-wider text-purple-400 uppercase">Plan Mensual Pro</span>
+          <div class="text-3xl font-extrabold text-white mt-1">$20.000 <span class="text-sm font-normal text-slate-500">COP / mes</span></div>
+        </div>
+        <p class="text-xs text-slate-400">Control total e inmediato de tu agenda mes a mes, sin contratos de permanencia.</p>
+        <button onclick="pagarSuscripcion(20000, 'ZapiCitas Plan Mensual')" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-md transition-all mt-2">Comprar con Nequi / PSE</button>
+      </div>
+
+      <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-purple-600 flex flex-col gap-4 relative">
+        <span class="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-600 text-white">Ahorra 2 Meses</span>
+        <div>
+          <span class="text-xs font-bold tracking-wider text-purple-400 uppercase">Plan Anual Oro</span>
+          <div class="text-3xl font-extrabold text-white mt-1">$200.000 <span class="text-sm font-normal text-slate-500">COP / año</span></div>
+        </div>
+        <p class="text-xs text-slate-400">Asegura tu plataforma durante todo el año, ahorra $40.000 pesos y olvídate de renovaciones mensuales.</p>
+        <button onclick="pagarSuscripcion(200000, 'ZapiCitas Plan Anual')" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-md transition-all mt-2">Comprar Plan Anual</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="py-12 text-center text-[10px] text-slate-600 border-t border-slate-900 max-w-xl mx-auto w-full">
+    <p>ZapiCitas Sistema Automático © 2026</p>
+  </footer>
+
+  <script>
+    function pagarSuscripcion(valor, nombrePlan) {
+      // Configuración del botón de pagos integrado
+      var handler = ePayco.checkout.configure({
+        key: '456b70665e1720d73ef488cf424f1111', // Aquí pones tu Public Key de ePayco cuando crees tu cuenta
+        test: true // Déjalo en true para hacer pruebas simuladas, luego false para producción
+      });
+
+      handler.open({
+        name: nombrePlan,
+        description: "Activación inmediata de ZapiCitas para tu barbería",
+        currency: "cop",
+        amount: valor.toString(),
+        tax_base: "0",
+        tax: "0",
+        country: "co",
+        lang: "es",
+        // Enlaces adonde se redirige al cliente tras pagar
+        external: "false",
+        confirmation: "https://zapicitas.pages.dev/admin.html",
+        response: "https://zapicitas.pages.dev/admin.html",
+      });
+    }
+  </script>
+</body>
+</html>
