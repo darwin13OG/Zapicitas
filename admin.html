@@ -71,6 +71,30 @@
         </div>
       </div>
 
+      {/* 🌟 BLOQUE DEL FORMULARIO MANUAL RECONSTRUIDO */}
+              <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-4">
+                <button onClick={() => setShowManualForm(!showManualForm)} className="w-full flex items-center justify-between text-xs font-bold text-slate-300">
+                  <span>{showManualForm ? '− Cerrar Formulario' : '➕ Agendar Cita Manual'}</span>
+                </button>
+                {showManualForm && (
+                  <form onSubmit={handleAuthSubmit} className="space-y-3 pt-3 mt-2 border-t border-slate-850">
+                    <input type="text" required placeholder="Nombre Cliente" value={manualName} onChange={(e) => setManualName(e.target.value)} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none" />
+                    <input type="tel" required placeholder="Celular Cliente" value={manualPhone} onChange={(e) => setManualPhone(e.target.value)} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none" />
+                    <select value={manualDate} onChange={(e) => { setManualDate(e.target.value); setManualTime(''); }} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-400 outline-none">
+                      {daysList.map(d => <option key={d.isoString} value={d.isoString}>{d.dayName} {d.dayNumber}</option>)}
+                    </select>
+                    <div className="grid grid-cols-3 gap-1 max-h-[100px] overflow-y-auto custom-scrollbar p-1 bg-slate-950 rounded-xl border border-slate-850">
+                      {timeSlots.map(slot => {
+                        const isBooked = appointments.some(app => app.fecha_turno === manualDate && app.hora_turno === slot.formatted);
+                        if (isBooked) return null; // CORREGIDO: Desaparece la hora si ya está ocupada
+                        return <button key={slot.rawValue} type="button" onClick={() => setManualTime(slot.formatted)} className={`p-2 border rounded-lg text-[9px] ${manualTime === slot.formatted ? 'bg-purple-600/20 border-purple-500 text-purple-300' : 'bg-slate-950 border-slate-850 text-slate-400'}`}>{slot.formatted}</button>;
+                      })}
+                    </div>
+                    <button type="submit" disabled={!manualTime} className="w-full py-2.5 bg-purple-600 disabled:opacity-40 text-xs font-bold rounded-xl text-white">Sincronizar Turno</button>
+                  </form>
+                )}
+              </div>
+
       <!-- AGENDA -->
       <div class="space-y-4">
         <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] px-2">Agenda de Hoy</h3>
