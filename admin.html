@@ -65,7 +65,10 @@
 
     function App() {
       const [isAuthenticated, setIsAuthenticated] = useState(false);
-      const [isRegisterMode, setIsRegisterMode] = useState(false); // Controla si es login o el cuestionario de registro nuevo
+      const [isRegisterMode, setIsRegisterMode] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('mode') === 'register';
+}); // Controla si es login o el cuestionario de registro nuevo
       const [barberiaId, setBarberiaId] = useState(null); 
       const [barberiaName, setBarberiaName] = useState('');
       const [celular, setCelular] = useState('');
@@ -95,6 +98,7 @@
         if (!error && data) setAppointments(data);
       };
 
+      // EFECTO 1: Escuchar los cambios de citas en tiempo real con Supabase
       useEffect(() => {
         if (isAuthenticated && barberiaId) {
           fetchCitasDesdeServidor(barberiaId);
@@ -105,6 +109,13 @@
           return () => { supabase.removeChannel(channel); };
         }
       }, [isAuthenticated, barberiaId]);
+
+      // EFECTO 2: Si ya se autenticó, limpiamos los parámetros de la URL para que quede solo /admin
+      useEffect(() => {
+        if (isAuthenticated) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }, [isAuthenticated]);
 
       // Control de Acceso y Registro blindado
       const handleAuthSubmit = async (e) => {
