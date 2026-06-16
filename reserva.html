@@ -11,110 +11,146 @@
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased">
   <div id="app" class="max-w-md mx-auto px-6 py-10 space-y-8" v-cloak>
     
-    <header class="text-center">
-      <h1 class="text-3xl font-black text-white tracking-tight uppercase">{{ bizName }}</h1>
-      <div v-if="pausado" class="mt-4 p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl">
-        <p class="text-rose-400 font-bold text-sm">Lo sentimos, no estamos recibiendo citas ahora mismo.</p>
+    <header class="text-center space-y-4">
+      <h1 class="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">{{ bizName }}</h1>
+      <div v-if="pausado" class="mt-4 p-6 bg-rose-500/10 border border-rose-500/20 rounded-3xl">
+        <p class="text-rose-400 font-bold text-sm">No estamos recibiendo citas actualmente.</p>
       </div>
     </header>
 
-    <!-- NAVEGACION PORTAL -->
-    <div class="flex bg-slate-900 p-1 rounded-2xl border border-slate-800">
-      <button @click="tab = 'reserva'" :class="tab === 'reserva' ? 'bg-purple-600 text-white' : 'text-slate-500'" class="flex-1 py-3 rounded-xl font-bold uppercase text-[10px] transition-all">Reservar</button>
-      <button @click="tab = 'consulta'" :class="tab === 'consulta' ? 'bg-purple-600 text-white' : 'text-slate-500'" class="flex-1 py-3 rounded-xl font-bold uppercase text-[10px] transition-all">Mi Cita</button>
+    <!-- NAVEGACION -->
+    <div class="flex bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
+      <button @click="tab = 'reserva'" :class="tab === 'reserva' ? 'bg-purple-600 text-white' : 'text-slate-500'" class="flex-1 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all">Reservar</button>
+      <button @click="tab = 'consulta'" :class="tab === 'consulta' ? 'bg-purple-600 text-white' : 'text-slate-500'" class="flex-1 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all">Mi Cita</button>
     </div>
 
     <!-- PESTAÑA: AGENDAR -->
     <div v-if="tab === 'reserva' && !pausado" class="space-y-6">
-      <form @submit.prevent="save" class="space-y-4">
-        <div class="space-y-1">
-          <label class="text-[10px] font-bold text-slate-500 uppercase px-1">Día del turno</label>
-          <input v-model="form.date" type="date" required class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
-        </div>
-        <div class="space-y-1">
-          <label class="text-[10px] font-bold text-slate-500 uppercase px-1">Hora del turno</label>
-          <input v-model="form.time" type="time" required class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
-        </div>
-        <input v-model="form.cli" type="text" placeholder="Tu nombre" required class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
-        <input v-model="form.tel" type="tel" placeholder="Tu celular" required class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
-        <button type="submit" class="w-full py-4 bg-purple-600 rounded-2xl font-bold shadow-lg shadow-purple-600/20 active:scale-95">AGENDAR TURNO</button>
-      </form>
-    </div>
-
-    <!-- PESTAÑA: CONSULTAR/CANCELAR -->
-    <div v-if="tab === 'consulta'" class="space-y-6 animate-in fade-in duration-300">
-      <div class="space-y-3">
-        <p class="text-xs text-slate-400 text-center">Busca tu cita para ver el estado o cancelar</p>
-        <div class="flex gap-2">
-          <input v-model="searchTel" type="tel" placeholder="Tu celular" class="flex-1 p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
-          <button @click="consultar" class="bg-purple-600 px-6 rounded-2xl font-bold shadow-lg">🔍</button>
-        </div>
+      <div class="space-y-2">
+        <label class="text-[10px] font-bold text-slate-500 uppercase px-1">1. ¿Qué día vienes?</label>
+        <input v-model="form.date" type="date" @change="fetchOcupados" :min="minDate" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
       </div>
 
+      <div v-if="form.date" class="space-y-3">
+        <label class="text-[10px] font-bold text-slate-500 uppercase px-1">2. ¿A qué hora?</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" v-for="h in availableSlots" :key="h" @click="form.time = h" 
+            :class="form.time === h ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-400'"
+            class="py-3 border rounded-xl text-[10px] font-bold transition-all">
+            {{ h }}
+          </button>
+        </div>
+        <p v-if="availableSlots.length === 0" class="text-center text-[10px] text-rose-400 italic">No hay espacios para este día.</p>
+      </div>
+
+      <div v-if="form.time" class="space-y-3 pt-4 border-t border-slate-900 animate-in fade-in duration-500">
+        <input v-model="form.cli" type="text" placeholder="Tu nombre completo" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
+        <input v-model="form.tel" type="tel" placeholder="Tu celular" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
+        <button @click="save" class="w-full py-5 bg-purple-600 rounded-3xl font-black text-sm shadow-xl shadow-purple-600/30">CONFIRMAR TURNO</button>
+      </div>
+    </div>
+
+    <!-- PESTAÑA: CONSULTA -->
+    <div v-if="tab === 'consulta'" class="space-y-6">
+      <div class="flex gap-2">
+        <input v-model="searchTel" type="tel" placeholder="Tu celular" class="flex-1 p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
+        <button @click="consultar" class="bg-purple-600 px-6 rounded-2xl font-bold">🔍</button>
+      </div>
       <div v-for="c in misCitas" :key="c.id" class="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4 shadow-xl">
         <div class="flex justify-between items-start">
-          <div>
-            <p class="text-xs text-slate-500 font-bold uppercase">{{ c.fecha_turno }}</p>
-            <p class="text-xl font-black text-white">{{ c.hora_turno }}</p>
-          </div>
-          <span :class="c.estado === 'paid' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'" class="px-3 py-1 rounded-full text-[9px] font-bold uppercase">
-            {{ c.estado === 'paid' ? 'Pagado' : 'Pendiente' }}
-          </span>
+          <p class="font-black text-white leading-none">{{ c.hora_turno }}<br><span class="text-[10px] text-slate-500 font-bold uppercase">{{ c.fecha_turno }}</span></p>
+          <span :class="c.estado === 'paid' ? 'text-emerald-400' : 'text-amber-400'" class="text-[9px] font-bold uppercase">{{ c.estado === 'paid' ? 'Pagado' : 'Pendiente' }}</span>
         </div>
-        <div class="pt-4 border-t border-slate-800 flex flex-col gap-2">
-          <button @click="cancelar(c.id)" class="w-full py-3 bg-slate-800 text-rose-400 rounded-xl text-[10px] font-bold border border-rose-900/30 uppercase tracking-widest">Cancelar Turno</button>
-        </div>
+        <button @click="cancelar(c.id)" class="w-full py-2 bg-slate-950 text-rose-500 rounded-xl text-[10px] font-bold border border-rose-900/20 uppercase tracking-widest">Cancelar Turno</button>
       </div>
     </div>
+
+    <!-- MODAL DE ÉXITO ELEGANTE -->
+    <div v-if="successModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6 z-50 animate-in fade-in duration-300">
+      <div class="bg-slate-900 border border-purple-500/30 p-10 rounded-[3rem] text-center space-y-6 shadow-2xl max-w-xs w-full animate-in zoom-in duration-300">
+        <div class="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner animate-bounce">✓</div>
+        <div class="space-y-2">
+          <h2 class="text-2xl font-black text-white uppercase tracking-tighter italic">¡Turno Agendado!</h2>
+          <p class="text-slate-400 text-sm">Te esperamos con gusto. Hemos guardado tu espacio correctamente.</p>
+        </div>
+        <button @click="successModal = false; location.reload()" class="w-full py-4 bg-purple-600 rounded-2xl font-bold shadow-lg shadow-purple-600/30">EXCELENTE</button>
+      </div>
+    </div>
+
   </div>
 
   <style>[v-cloak] { display: none; }</style>
 
   <script>
-    const { createApp, ref, onMounted } = Vue;
+    const { createApp, ref, computed, onMounted } = Vue;
     const sb = supabase.createClient("https://tsasorwwbbscnbvoyyhf.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzYXNvcnd3YmJzY25idm95eWhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTg5NjEsImV4cCI6MjA5NzE3NDk2MX0.-A0fl15WmXcnU-81iUazvy-GBrS22ktaKcoQx56jmZ8");
 
     createApp({
       setup() {
         const tab = ref('reserva');
         const bizId = ref('');
-        const bizName = ref('...');
+        const bizName = ref('Cargando...');
         const pausado = ref(false);
+        const successModal = ref(false);
+        const bizConfig = ref({ inicio: '08:00', fin: '18:00', duracion: 60 });
+        const occupiedSlots = ref([]);
+        const minDate = new Date().toISOString().split('T')[0];
         const form = ref({ date: '', time: '', cli: '', tel: '' });
         const searchTel = ref('');
         const misCitas = ref([]);
+
+        const availableSlots = computed(() => {
+          const slots = [];
+          let current = new Date(`2024-01-01T${bizConfig.value.inicio}`);
+          const end = new Date(`2024-01-01T${bizConfig.value.fin}`);
+          
+          while(current < end) {
+            const timeStr = current.toTimeString().slice(0, 5);
+            if(!occupiedSlots.value.includes(timeStr)) slots.push(timeStr);
+            current.setMinutes(current.getMinutes() + bizConfig.value.duracion);
+          }
+          return slots;
+        });
 
         onMounted(async () => {
           const id = new URLSearchParams(window.location.search).get('id');
           if (id) {
             bizId.value = id;
             const { data } = await sb.from('perfil_barberia').select('*').eq('id', id).single();
-            if(data) { bizName.value = data.nombre_negocio; pausado.value = data.esta_pausado; }
+            if(data) {
+              bizName.value = data.nombre_negocio;
+              pausado.value = data.esta_pausado;
+              bizConfig.value = { inicio: data.hora_inicio, fin: data.hora_fin, duracion: data.duracion_minutos };
+            }
           }
         });
 
+        const fetchOcupados = async () => {
+          if(!form.value.date) return;
+          const { data } = await sb.from('citas').select('hora_turno').eq('barberia_id', bizId.value).eq('fecha_turno', form.value.date);
+          occupiedSlots.value = data ? data.map(d => d.hora_turno.slice(0, 5)) : [];
+        };
+
         const save = async () => {
-          await sb.from('citas').insert([{ barberia_id: bizId.value, nombre_cliente: form.value.cli, celular_cliente: form.value.tel, fecha_turno: form.value.date, hora_turno: form.value.time, estado: 'pending' }]);
-          alert("¡Turno reservado con éxito!");
-          location.reload();
+          if(!form.value.cli || !form.value.tel) return alert("Completa tus datos");
+          const { error } = await sb.from('citas').insert([{ barberia_id: bizId.value, nombre_cliente: form.value.cli, celular_cliente: form.value.tel, fecha_turno: form.value.date, hora_turno: form.value.time, estado: 'pending' }]);
+          if(!error) successModal.value = true;
+          else alert("Error al agendar");
         };
 
         const consultar = async () => {
-          if(!searchTel.value) return;
           const { data } = await sb.from('citas').select('*').eq('barberia_id', bizId.value).eq('celular_cliente', searchTel.value);
           misCitas.value = data || [];
-          if(misCitas.value.length === 0) alert("No hay citas pendientes con este número.");
         };
 
         const cancelar = async (id) => {
-          if(confirm('¿Deseas cancelar tu turno? Esto lo borrará de la agenda.')) {
+          if(confirm('¿Deseas cancelar?')) {
             await sb.from('citas').delete().eq('id', id);
-            alert("Turno cancelado.");
             consultar();
           }
         };
 
-        return { tab, bizName, pausado, form, searchTel, misCitas, save, consultar, cancelar };
+        return { tab, bizName, pausado, form, successModal, minDate, availableSlots, searchTel, misCitas, fetchOcupados, save, consultar, cancelar };
       }
     }).mount('#app');
   </script>
