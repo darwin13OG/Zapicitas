@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZapiCitas | Automatiza tu Agenda</title>
+  <title>ZapiCitas | Gestiona tu Negocio</title>
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased">
@@ -11,102 +11,75 @@
   <!-- HERO -->
   <section class="w-full py-20 px-6 max-w-xl mx-auto text-center flex flex-col gap-6">
     <div class="animate-pulse">
-      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
-        ⚡ Sistema de agendamiento 100% automático
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-widest">
+        ⚡ Agendamiento Inteligente
       </span>
     </div>
-
     <h1 class="text-5xl font-extrabold text-white tracking-tight leading-tight">
-      Corta cabello, <br>
-      <span class="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">no llamadas.</span>
+      Tu tiempo es oro. <br>
+      <span class="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">Automatiza tu agenda.</span>
     </h1>
-
     <p class="text-lg text-slate-400 leading-relaxed">
-      ZapiCitas es el asistente virtual que tu barbería necesita. Deja que tus clientes agenden solos y organiza tu día sin estrés.
+      La forma más sencilla de recibir citas para tu negocio. Sin llamadas, sin distracciones, 100% en automático.
     </p>
-
     <div class="mt-4 flex flex-col sm:flex-row gap-3">
       <a href="#planes" class="inline-block w-full py-4 px-8 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-base shadow-lg shadow-purple-600/30 transition-all text-center">
-        Registrar mi Negocio
+        Comenzar Ahora
       </a>
       <a href="admin" class="inline-block w-full py-4 px-8 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 font-bold text-base transition-all text-center">
-        Panel Administrador
+        Panel de Control
       </a>
     </div>
   </section>
 
   <!-- BENEFICIOS -->
-  <section class="w-full py-12 px-6 max-w-xl mx-auto flex flex-col gap-6">
-    <div class="flex flex-col gap-3 p-6 rounded-2xl bg-slate-900/50 border border-slate-900">
-      <div class="text-purple-400 font-bold text-xl flex items-center gap-2">
-        <span>📱</span> Adiós al WhatsApp saturado
-      </div>
-      <p class="text-sm text-slate-400 leading-relaxed">
-        Tus clientes reservan su propio turno en 3 toques desde un enlace personalizado, sin que tú tengas que pausar tu trabajo para contestar mensajes.
-      </p>
+  <section class="w-full py-12 px-6 max-w-xl mx-auto grid gap-6">
+    <div class="p-6 rounded-2xl bg-slate-900/50 border border-slate-900">
+      <div class="text-purple-400 font-bold text-xl mb-2">🚀 Autogestión</div>
+      <p class="text-sm text-slate-400">Tus clientes eligen la hora y reservan solos desde un link en tu perfil social.</p>
     </div>
-
-    <div class="flex flex-col gap-3 p-6 rounded-2xl bg-slate-900/50 border border-slate-900">
-      <div class="text-purple-400 font-bold text-xl flex items-center gap-2">
-        <span>⚡</span> Panel Móvil Ultra-Limpio
-      </div>
-      <p class="text-sm text-slate-400 leading-relaxed">
-        Una interfaz diseñada exclusivamente para pantallas de celulares. Revisa tus citas del día, cancela o agrega nuevos turnos de forma cómoda.
-      </p>
+    <div class="p-6 rounded-2xl bg-slate-900/50 border border-slate-900">
+      <div class="text-purple-400 font-bold text-xl mb-2">📊 Control Total</div>
+      <p class="text-sm text-slate-400">Administra tus ingresos diarios y mensuales desde cualquier lugar con tu celular.</p>
     </div>
   </section>
 
   <!-- TARIFAS -->
   <section id="planes" class="w-full py-16 px-6 max-w-xl mx-auto text-center flex flex-col gap-8">
-    <div class="flex flex-col gap-2">
-      <h2 class="text-3xl font-bold text-white">Planes Hechos para Crecer</h2>
-      <p class="text-sm text-slate-400 italic">Todo ilimitado por un único precio mensual.</p>
-    </div>
-
+    <h2 class="text-3xl font-bold text-white">Planes Todo Incluido</h2>
     <div class="flex flex-col gap-6 text-left">
-      <div class="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 flex flex-col gap-4">
+      <div class="p-8 rounded-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 flex flex-col gap-4">
         <span class="text-xs font-bold text-purple-400 uppercase tracking-widest">Suscripción Mensual</span>
-        <div class="text-3xl font-extrabold text-white">$20.000 <span class="text-sm font-normal text-slate-500">COP / mes</span></div>
-        <p class="text-xs text-slate-400 leading-relaxed">Ideal para barberos independientes que quieren profesionalizar su agenda de inmediato.</p>
-        <a href="https://checkout.nequi.wompi.co/l/ofT0mJ" target="_blank" class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white text-center font-bold rounded-xl shadow-lg transition-all">
-          Pagar con Wompi (Nequi/PSE)
-        </a>
-      </div>
-
-      <div class="p-6 rounded-2xl bg-slate-900 border-2 border-purple-600 flex flex-col gap-4 relative">
-        <span class="absolute -top-3 right-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-purple-600 text-white">Ahorra 2 Meses</span>
-        <span class="text-xs font-bold text-purple-400 uppercase tracking-widest">Plan Anual Oro</span>
-        <div class="text-3xl font-extrabold text-white">$200.000 <span class="text-sm font-normal text-slate-500">COP / año</span></div>
-        <p class="text-xs text-slate-400 leading-relaxed">Asegura tu plataforma por todo el año y olvídate de pagos mensuales. Ahorro inmediato.</p>
-        <a href="https://checkout.nequi.wompi.co/l/Pc5a1K" target="_blank" class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white text-center font-bold rounded-xl transition-all">
-          Pagar Año Completo
+        <div class="text-4xl font-extrabold text-white">$20.000 <span class="text-sm font-normal text-slate-500">COP / mes</span></div>
+        <p class="text-sm text-slate-400">Citas ilimitadas, soporte y panel administrativo móvil.</p>
+        <a href="https://checkout.nequi.wompi.co/l/ofT0mJ" target="_blank" class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white text-center font-bold rounded-xl shadow-lg transition-all mt-4">
+          Pagar con Wompi
         </a>
       </div>
     </div>
   </section>
 
-  <!-- CÓMO FUNCIONA (Debajo de los precios) -->
+  <!-- CÓMO FUNCIONA (Después de los precios) -->
   <section class="w-full py-16 px-6 max-w-xl mx-auto border-t border-slate-900">
-    <h2 class="text-2xl font-bold text-white text-center mb-10">¿Cómo activo mi barbería?</h2>
-    
+    <h2 class="text-2xl font-bold text-white text-center mb-10">¿Cómo activo mi negocio?</h2>
     <div class="space-y-10">
-      <div class="flex gap-4">
-        <span class="flex-shrink-0 w-8 h-8 bg-purple-600/20 text-purple-400 border border-purple-600/30 rounded-lg flex items-center justify-center font-bold">1</span>
-        <p class="text-sm text-slate-400"><strong class="text-white">Paga tu suscripción:</strong> Haz el pago seguro vía Wompi. Serás redirigido automáticamente al panel de registro.</p>
+      <div class="flex gap-5">
+        <div class="w-10 h-10 rounded-full bg-purple-600/20 border border-purple-500/30 flex items-center justify-center font-bold text-purple-400 shrink-0">1</div>
+        <p class="text-slate-400 text-sm"><strong class="text-white block text-base">Realiza el pago</strong> Asegura tu cupo mediante Wompi. Es rápido y seguro.</p>
       </div>
-      <div class="flex gap-4">
-        <span class="flex-shrink-0 w-8 h-8 bg-purple-600/20 text-purple-400 border border-purple-600/30 rounded-lg flex items-center justify-center font-bold">2</span>
-        <p class="text-sm text-slate-400"><strong class="text-white">Crea tu acceso:</strong> Define el nombre de tu negocio y tu contraseña. Ya tienes tu panel administrativo listo.</p>
+      <div class="flex gap-5">
+        <div class="w-10 h-10 rounded-full bg-purple-600/20 border border-purple-500/30 flex items-center justify-center font-bold text-purple-400 shrink-0">2</div>
+        <p class="text-slate-400 text-sm"><strong class="text-white block text-base">Registra tus datos</strong> Tras pagar, entra al panel y crea tu perfil con el nombre de tu negocio.</p>
       </div>
-      <div class="flex gap-4">
-        <span class="flex-shrink-0 w-8 h-8 bg-purple-600/20 text-purple-400 border border-purple-600/30 rounded-lg flex items-center justify-center font-bold">3</span>
-        <p class="text-sm text-slate-400"><strong class="text-white">Comparte el link:</strong> Copia tu link de reservas y ponlo en tu Instagram. ¡Empezarás a recibir citas de inmediato!</p>
+      <div class="flex gap-5">
+        <div class="w-10 h-10 rounded-full bg-purple-600/20 border border-purple-500/30 flex items-center justify-center font-bold text-purple-400 shrink-0">3</div>
+        <p class="text-slate-400 text-sm"><strong class="text-white block text-base">¡Listo para recibir citas!</strong> Copia tu link, compártelo y deja que el sistema trabaje por ti.</p>
       </div>
     </div>
   </section>
 
   <footer class="w-full py-12 text-center text-[10px] text-slate-600 border-t border-slate-900">
-    &copy; 2026 ZapiCitas. Automatización para barberías.
+    &copy; 2026 ZapiCitas. Automatización Profesional.
   </footer>
 </body>
 </html>
