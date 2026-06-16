@@ -65,16 +65,17 @@
 
     function App() {
       const [isAuthenticated, setIsAuthenticated] = useState(false);
+      // DETECTOR INTELIGENTE: Si viene de Wompi (trae ?id=...) activa modo registro
       const [isRegisterMode, setIsRegisterMode] = useState(() => {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('mode') === 'register';
-}); // Controla si es login o el cuestionario de registro nuevo
+        const params = new URLSearchParams(window.location.search);
+        return params.get('mode') === 'register' || params.has('id');
+      });
+
       const [barberiaId, setBarberiaId] = useState(null); 
       const [barberiaName, setBarberiaName] = useState('');
       const [celular, setCelular] = useState('');
       const [password, setPassword] = useState('');
       const [copied, setCopied] = useState(false);
-      
 
       const daysList = useMemo(() => getNextSevenDays(), []);
       const timeSlots = useMemo(() => generate30MinSlots(START_HOUR, END_HOUR), []);
@@ -99,7 +100,6 @@
         if (!error && data) setAppointments(data);
       };
 
-      // EFECTO 1: Escuchar los cambios de citas en tiempo real con Supabase
       useEffect(() => {
         if (isAuthenticated && barberiaId) {
           fetchCitasDesdeServidor(barberiaId);
@@ -111,14 +111,13 @@
         }
       }, [isAuthenticated, barberiaId]);
 
-      // EFECTO 2: Si ya se autenticó, limpiamos los parámetros de la URL para que quede solo /admin
+      // Limpiar URL después de entrar
       useEffect(() => {
         if (isAuthenticated) {
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       }, [isAuthenticated]);
 
-      // Control de Acceso y Registro blindado
       const handleAuthSubmit = async (e) => {
         e.preventDefault();
         if (!barberiaName.trim() || !celular.trim() || !password.trim()) return;
@@ -126,37 +125,27 @@
         const { data: existente } = await supabase.from('perfil_barberia').select('*').eq('celular', celular.trim());
 
         if (isRegisterMode) {
-          // Proceso de cuestionario post-pago
           if (existente && existente.length > 0) {
-            alert('Este número de celular ya tiene una barbería registrada. Intenta iniciar sesión.');
+            alert('Este número ya está registrado.');
             return;
           }
           const { data: nuevo, error } = await supabase.from('perfil_barberia').insert([{ nombre_negocio: barberiaName.trim(), celular: celular.trim(), clave_acceso: password.trim() }]).select();
-          if (!error && nuevo && nuevo.length > 0) {
-            alert('¡Tu barbería ha sido dada de alta con éxito!');
+          if (!error && nuevo) {
             setBarberiaId(nuevo[0].id);
             setBarberiaName(nuevo[0].nombre_negocio);
             setIsAuthenticated(true);
-          } else {
-            alert('Hubo un error al registrar los datos.');
           }
         } else {
-          // Proceso normal de entrada al admin
-          if (existente && existente.length > 0) {
-            if (existente[0].clave_acceso === password.trim()) {
-              setBarberiaId(existente[0].id);
-              setBarberiaName(existente[0].nombre_negocio);
-              setIsAuthenticated(true);
-            } else {
-              alert('Contraseña incorrecta.');
-            }
+          if (existente && existente.length > 0 && existente[0].clave_acceso === password.trim()) {
+            setBarberiaId(existente[0].id);
+            setBarberiaName(existente[0].nombre_negocio);
+            setIsAuthenticated(true);
           } else {
-            alert('No se encontró ningún negocio con ese celular. Si acabas de pagar, toca el botón de abajo para rellenar el cuestionario.');
+            alert('Credenciales incorrectas o el negocio no existe.');
           }
         }
       };
 
-      // CORREGIDO: Enlace limpio apuntando a la estructura de carpetas /reserva sin .html
       const customClientLink = useMemo(() => {
         if (!barberiaId) return '';
         return `${window.location.origin}/reserva?id=${barberiaId}`;
@@ -186,10 +175,8 @@
 
       const handleManualSubmit = async (e) => {
         e.preventDefault();
-        if (!manualName.trim() || !manualPhone.trim() || !manualTime || !barberiaId) return;
-
-        await supabase.from('citas').insert([{ barberia_id: barberiaId, nombre_cliente: manualName.trim(), celular_cliente: manualPhone.trim(), fecha_turno: manualDate, hora_turno: manualTime, estado: 'pending' }]);
-        setManualName(''); setManualPhone(''); setManualTime(''); setShowManualForm(false);
+        await supabase.from('citas').insert([{ barberia_id: barberiaId, nombre_cliente: manualName, celular_cliente: manualPhone, fecha_turno: manualDate, hora_turno: manualTime, estado: 'pending' }]);
+        setShowManualForm(false);
         fetchCitasDesdeServidor(barberiaId);
       };
 
@@ -202,9 +189,8 @@
 
       const handleChargeConfirm = async (e) => {
         e.preventDefault();
-        if (!chargeInput || !checkoutId) return;
         await supabase.from('citas').update({ valor_cobrado: Number(chargeInput), estado: 'paid' }).eq('id', checkoutId);
-        setCheckoutId(null); setChargeInput('');
+        setCheckoutId(null);
         fetchCitasDesdeServidor(barberiaId);
       };
 
@@ -213,56 +199,43 @@
           {!isAuthenticated ? (
             <div className="my-auto py-8 px-6 bg-slate-900/40 border border-slate-900 rounded-3xl space-y-6">
               <h1 className="text-2xl font-extrabold text-center text-white">
-                {isRegisterMode ? "📝 Cuestionario de Registro" : "Acceso Administrador"}
+                {isRegisterMode ? "📝 Registro de Barbería" : "Acceso Administrador"}
               </h1>
-              <p className="text-xs text-center text-slate-400 -mt-4">
-                {isRegisterMode ? "Configura los accesos públicos de tu barbería" : "Ingresa para gestionar tus turnos activos"}
-              </p>
-              
               <form onSubmit={handleAuthSubmit} className="space-y-4">
-                <input type="text" required placeholder="Nombre de la Barbería" value={barberiaName} onChange={(e) => setBarberiaName(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 outline-none" />
-                <input type="tel" required placeholder="Celular del Negocio" value={celular} onChange={(e) => setCelular(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 outline-none" />
-                <input type="password" required placeholder="Contraseña de Entrada" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-center tracking-widest text-slate-100 outline-none" />
-                
-                <button type="submit" className="w-full py-4 bg-purple-600 hover:bg-purple-700 font-bold rounded-2xl text-sm shadow-lg transition-all">
-                  {isRegisterMode ? "Finalizar y Crear Espacio" : "Entrar al Panel"}
+                <input type="text" required placeholder="Nombre de la Barbería" value={barberiaName} onChange={(e) => setBarberiaName(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white outline-none" />
+                <input type="tel" required placeholder="Celular del Negocio" value={celular} onChange={(e) => setCelular(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white outline-none" />
+                <input type="password" required placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-center text-white outline-none" />
+                <button type="submit" className="w-full py-4 bg-purple-600 font-bold rounded-2xl text-sm shadow-lg transition-all">
+                  {isRegisterMode ? "Crear mi Espacio" : "Entrar al Panel"}
                 </button>
               </form>
-
-              <div className="text-center pt-2 border-t border-slate-850">
-                <button 
-                  onClick={() => { setIsRegisterMode(!isRegisterMode); setBarberiaName(''); setCelular(''); setPassword(''); }} 
-                  className="text-xs text-purple-400 font-semibold hover:underline"
-                >
-                  {isRegisterMode ? "¿Ya tienes cuenta? Inicia Sesión" : "¿Acabas de pagar con Wompi? Regístrate aquí"}
-                </button>
-              </div>
+              <button onClick={() => setIsRegisterMode(!isRegisterMode)} className="w-full text-xs text-purple-400 font-semibold">
+                {isRegisterMode ? "¿Ya tienes cuenta? Entra aquí" : "¿No tienes cuenta? Regístrate tras pagar"}
+              </button>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border border-purple-500/30 p-4 rounded-2xl text-center space-y-2">
-                <span className="text-[10px] uppercase font-bold text-purple-300 tracking-wider block">🔗 Tu Link de Reservas para Clientes</span>
-                <p className="text-xs text-slate-300 font-mono select-all bg-slate-950/80 p-2 rounded-xl border border-slate-800 truncate">{customClientLink}</p>
-                <button onClick={copyLinkToClipboard} className="w-full py-1.5 bg-purple-600 text-white text-[11px] font-bold rounded-lg transition-all">
-                  {copied ? '¡Copiado con Éxito! ✓' : 'Copiar Enlace para Instagram'}
+                <span className="text-[10px] uppercase font-bold text-purple-300 block">Link de Clientes</span>
+                <p className="text-[10px] text-slate-300 bg-slate-950 p-2 rounded-xl border border-slate-800 truncate">{customClientLink}</p>
+                <button onClick={copyLinkToClipboard} className="w-full py-2 bg-purple-600 text-white text-[11px] font-bold rounded-lg transition-all">
+                  {copied ? '¡Copiado! ✓' : 'Copiar para Instagram'}
                 </button>
               </div>
 
               <div className="flex items-center justify-between bg-slate-900/40 border border-slate-900 p-4 rounded-2xl">
-                <div>
-                  <h2 className="text-base font-bold text-white truncate max-w-[180px]">💈 {barberiaName}</h2>
-                </div>
-                <button onClick={() => setSalesModuleActive(!salesModuleActive)} className={`w-8 h-5 rounded-full p-0.5 transition-all flex items-center ${salesModuleActive ? 'bg-purple-600 justify-end' : 'bg-slate-800 justify-start'}`}><span className="w-4 h-4 rounded-full bg-white block"></span></button>
+                <h2 className="text-base font-bold text-white">💈 {barberiaName}</h2>
+                <button onClick={() => setSalesModuleActive(!salesModuleActive)} className={`w-8 h-5 rounded-full p-0.5 flex items-center ${salesModuleActive ? 'bg-purple-600 justify-end' : 'bg-slate-800 justify-start'}`}><span className="w-4 h-4 rounded-full bg-white"></span></button>
               </div>
 
               {salesModuleActive && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800">
-                    <span className="text-[9px] text-slate-500 font-bold block uppercase">Hoy</span>
+                  <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 text-center">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase block">Hoy</span>
                     <span className="text-base font-extrabold text-white block mt-1">{formatCurrency(dailyEarnings)}</span>
                   </div>
-                  <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800">
-                    <span className="text-[9px] text-slate-500 font-bold block uppercase">Mes</span>
+                  <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 text-center">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase block">Mes</span>
                     <span className="text-base font-extrabold text-emerald-400 block mt-1">{formatCurrency(monthlyEarnings)}</span>
                   </div>
                 </div>
@@ -270,24 +243,21 @@
 
               <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-4">
                 <button onClick={() => setShowManualForm(!showManualForm)} className="w-full flex items-center justify-between text-xs font-bold text-slate-300">
-                  <span>➕ Agendar Cita Manual</span>
+                  <span>➕ Nueva Cita Manual</span>
                   <span>{showManualForm ? '−' : '＋'}</span>
                 </button>
                 {showManualForm && (
-                  <form onSubmit={handleManualSubmit} className="space-y-3 pt-3 mt-2 border-t border-slate-850">
-                    <input type="text" required placeholder="Nombre Cliente" value={manualName} onChange={(e) => setManualName(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs outline-none" />
-                    <input type="tel" required placeholder="Celular Cliente" value={manualPhone} onChange={(e) => setManualPhone(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs outline-none" />
-                    <select value={manualDate} onChange={(e) => { setManualDate(e.target.value); setManualTime(''); }} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-400 outline-none">
+                  <form onSubmit={handleManualSubmit} className="space-y-3 mt-3">
+                    <input type="text" required placeholder="Nombre" value={manualName} onChange={(e) => setManualName(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white" />
+                    <input type="tel" required placeholder="Celular" value={manualPhone} onChange={(e) => setManualPhone(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white" />
+                    <select value={manualDate} onChange={(e) => setManualDate(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
                       {daysList.map(d => <option key={d.isoString} value={d.isoString}>{d.dayName} {d.dayNumber}</option>)}
                     </select>
-                    <div className="grid grid-cols-3 gap-1 max-h-[100px] overflow-y-auto custom-scrollbar p-1 bg-slate-950 rounded-xl border border-slate-850">
-                      {timeSlots.map(slot => {
-                        const isBooked = appointments.some(app => app.fecha_turno === manualDate && app.hora_turno === slot.formatted);
-                        if (isBooked) return <div key={slot.rawValue} className="p-2 text-slate-700 text-[9px] text-center line-through">Ocupado</div>;
-                        return <button key={slot.rawValue} type="button" onClick={() => setManualTime(slot.formatted)} className={`p-2 border rounded-lg text-[9px] ${manualTime === slot.formatted ? 'bg-purple-600/20 border-purple-500 text-purple-300' : 'bg-slate-950 border-slate-850 text-slate-400'}`}>{slot.formatted}</button>;
-                      })}
-                    </div>
-                    <button type="submit" className="w-full py-2 bg-purple-600 text-xs font-bold rounded-xl">Sincronizar Turno</button>
+                    <select value={manualTime} onChange={(e) => setManualTime(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+                      <option value="">Selecciona hora</option>
+                      {timeSlots.map(s => <option key={s.rawValue} value={s.formatted}>{s.formatted}</option>)}
+                    </select>
+                    <button type="submit" className="w-full py-2 bg-purple-600 text-xs font-bold rounded-xl">Agendar</button>
                   </form>
                 )}
               </div>
@@ -297,43 +267,36 @@
                   <span className="text-xs font-bold text-slate-300">Agenda Activa</span>
                   <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
                     <button onClick={() => setAdminViewType('day')} className={`px-2 py-0.5 rounded text-[8px] font-bold ${adminViewType === 'day' ? 'bg-slate-900 text-purple-400' : 'text-slate-500'}`}>Día</button>
-                    <button onClick={() => setAdminViewType('all')} className={`px-2 py-0.5 rounded text-[8px] font-bold ${adminViewType === 'all' ? 'bg-slate-900 text-purple-400' : 'text-slate-500'}`}>Todas ({appointments.length})</button>
+                    <button onClick={() => setAdminViewType('all')} className={`px-2 py-0.5 rounded text-[8px] font-bold ${adminViewType === 'all' ? 'bg-slate-900 text-purple-400' : 'text-slate-500'}`}>Todas</button>
                   </div>
                 </div>
 
-                {adminViewType === 'day' && (
-                  <div className="flex space-x-1.5 overflow-x-auto pb-1 custom-scrollbar">
-                    {daysList.map(d => <button key={d.isoString} onClick={() => setAdminFilterDate(d.isoString)} className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border shrink-0 ${adminFilterDate === d.isoString ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-950 border-slate-850 text-slate-400'}`}>{d.dayName} {d.dayNumber}</button>)}
-                  </div>
-                )}
+                <div className="flex space-x-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                  {daysList.map(d => <button key={d.isoString} onClick={() => setAdminFilterDate(d.isoString)} className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border shrink-0 ${adminFilterDate === d.isoString ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-950 border-slate-850 text-slate-400'}`}>{d.dayName} {d.dayNumber}</button>)}
+                </div>
 
                 <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-1">
-                  {filteredAppointments.length === 0 ? (
-                    <div className="py-6 text-center text-xs text-slate-600">No hay citas registradas.</div>
-                  ) : (
-                    filteredAppointments.map(app => (
-                      <div key={app.id} className="p-3 bg-slate-900 border border-slate-850 rounded-xl flex items-center justify-between">
-                        <div>
-                          <p className="text-xs font-bold text-slate-200">{app.nombre_cliente} <span className="text-[9px] font-normal text-slate-500">({app.celular_cliente})</span></p>
-                          <p className="text-[9px] text-slate-400 mt-1">{app.fecha_turno} | <span className="text-purple-400">{app.hora_turno}</span> {app.valor_cobrado && <span className="text-emerald-400 font-bold">({formatCurrency(app.valor_cobrado)})</span>}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {salesModuleActive && app.estado === 'pending' && <button onClick={() => setCheckoutId(app.id)} className="px-2 py-1 bg-purple-600 text-[9px] font-bold rounded">Cobrar</button>}
-                          <button onClick={() => handleCancelCita(app.id)} className="text-slate-500 hover:text-rose-400 text-xs">✕</button>
-                        </div>
+                  {filteredAppointments.map(app => (
+                    <div key={app.id} className="p-3 bg-slate-900 border border-slate-850 rounded-xl flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold text-slate-200">{app.nombre_cliente}</p>
+                        <p className="text-[9px] text-slate-400 mt-1">{app.hora_turno} | {app.valor_cobrado ? <span className="text-emerald-400">{formatCurrency(app.valor_cobrado)}</span> : 'Pendiente'}</p>
                       </div>
-                    ))
-                  )}
+                      <div className="flex items-center gap-2">
+                        {!app.valor_cobrado && <button onClick={() => setCheckoutId(app.id)} className="px-2 py-1 bg-purple-600 text-[9px] font-bold rounded">Cobrar</button>}
+                        <button onClick={() => handleCancelCita(app.id)} className="text-slate-500 text-xs">✕</button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               {checkoutId && (
-                <form onSubmit={handleChargeConfirm} className="bg-slate-900 border border-purple-500/30 p-3 rounded-xl flex gap-2">
-                  <input type="number" required placeholder="Valor Cobrado" value={chargeInput} onChange={(e) => setChargeInput(e.target.value)} className="flex-1 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs outline-none" />
-                  <button type="submit" className="px-3 bg-purple-600 text-xs font-bold rounded-lg">Confirmar</button>
+                <form onSubmit={handleChargeConfirm} className="bg-slate-900 border border-purple-500 p-3 rounded-xl flex gap-2">
+                  <input type="number" required placeholder="Valor" value={chargeInput} onChange={(e) => setChargeInput(e.target.value)} className="flex-1 px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs outline-none" />
+                  <button type="submit" className="px-3 bg-purple-600 text-xs font-bold rounded-lg">✓</button>
                 </form>
               )}
-              <button onClick={() => { setIsAuthenticated(false); setBarberiaId(null); }} className="w-full py-2 bg-slate-900 text-slate-500 text-xs rounded-xl">Cerrar Panel</button>
             </div>
           )}
           <footer className="py-4 text-center text-[9px] text-slate-600 border-t border-slate-900"><p>ZapiCitas Administrador © 2026</p></footer>
