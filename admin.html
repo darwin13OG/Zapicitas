@@ -9,65 +9,72 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>[v-cloak] { display: none; }</style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen antialiased">
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased font-sans">
   <div id="app" v-cloak>
     
-    <!-- PANTALLA DE SUSCRIPCIÓN VENCIDA -->
+    <!-- PANTALLA DE BLOQUEO (SUSCRIPCIÓN VENCIDA) -->
     <div v-if="vencido" class="max-w-md mx-auto py-20 px-6 text-center space-y-6">
       <div class="bg-slate-900 p-10 rounded-[3rem] border border-rose-500/30 shadow-2xl">
-        <h2 class="text-2xl font-black italic uppercase text-rose-500 leading-none">Acceso<br>Expirado</h2>
-        <p class="text-slate-400 text-[10px] font-bold uppercase mt-4 tracking-widest leading-relaxed">Tu suscripción de 30 días ha terminado. Realiza el pago para reactivar tu agenda.</p>
-        <button @click="logout" class="w-full mt-6 py-4 bg-purple-600 rounded-2xl font-black italic uppercase tracking-widest shadow-lg">Renovar Ahora</button>
+        <h2 class="text-2xl font-black italic uppercase text-rose-500">Acceso Expirado</h2>
+        <p class="text-slate-400 text-xs mt-4 uppercase font-bold tracking-widest">Tu suscripción ha terminado. Paga para reactivar.</p>
+        <button @click="logout" class="w-full mt-6 py-4 bg-purple-600 rounded-2xl font-black uppercase italic shadow-lg">Renovar Ahora</button>
       </div>
     </div>
 
-    <!-- LOGIN / REGISTRO (SIN BOTÓN PÚBLICO) -->
+    <!-- LOGIN / REGISTRO -->
     <div v-else-if="!auth" class="max-w-md mx-auto py-20 px-6">
       <div class="bg-slate-900/50 p-8 rounded-[2.5rem] border border-slate-800 space-y-6 shadow-2xl backdrop-blur-xl">
-        <h1 class="text-3xl font-black italic uppercase tracking-tighter text-center leading-none">Zapi<span class="text-purple-500">Citas</span></h1>
-        
-        <!-- Mensaje discreto si está en modo registro -->
-        <p v-if="isReg" class="text-[9px] text-emerald-400 font-bold uppercase text-center tracking-widest bg-emerald-500/10 py-2 rounded-full">Pago verificado: Crea tu cuenta</p>
-
+        <h1 class="text-3xl font-black italic uppercase tracking-tighter text-center">Zapi<span class="text-purple-500">Citas</span></h1>
         <form @submit.prevent="handleAuth" class="space-y-4">
-          <input v-if="isReg" v-model="form.name" type="text" placeholder="Nombre de tu Negocio" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none focus:border-purple-600">
-          <input v-model="form.tel" type="tel" placeholder="Tu celular" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none focus:border-purple-600">
-          <input v-model="form.pass" type="password" placeholder="Tu contraseña" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none focus:border-purple-600">
-          <button type="submit" class="w-full py-4 bg-purple-600 rounded-2xl font-black italic uppercase tracking-widest shadow-lg shadow-purple-600/20 active:scale-95 transition-all">
-            {{ isReg ? 'REGISTRAR MI NEGOCIO' : 'ENTRAR AL PANEL' }}
-          </button>
+          <input v-if="isReg" v-model="form.name" type="text" placeholder="Nombre de tu Negocio" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none">
+          <input v-model="form.tel" type="tel" placeholder="Tu celular" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white">
+          <input v-model="form.pass" type="password" placeholder="Tu contraseña" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white">
+          <button type="submit" class="w-full py-4 bg-purple-600 rounded-2xl font-black italic uppercase tracking-widest shadow-lg">{{ isReg ? 'Crear Negocio' : 'Entrar' }}</button>
         </form>
-        
-        <p v-if="!isReg" class="text-[9px] text-slate-600 text-center uppercase font-bold tracking-widest">Acceso restringido para administradores</p>
       </div>
     </div>
 
-    <!-- PANEL PRINCIPAL (Igual que antes pero optimizado) -->
+    <!-- PANEL PRINCIPAL -->
     <div v-else class="max-w-md mx-auto p-4 space-y-6 animate-in fade-in duration-500">
-      <header class="bg-slate-900/80 p-6 rounded-[2rem] border border-slate-800 flex justify-between items-center shadow-xl backdrop-blur-md">
+      
+      <!-- CABECERA -->
+      <header class="bg-slate-900 p-6 rounded-[2.5rem] border border-slate-800 flex justify-between items-center shadow-xl">
         <div>
-          <h2 class="text-lg font-black italic uppercase tracking-tighter text-white">{{ bizName }}</h2>
-          <p class="text-[8px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Plan Activo hasta: {{ fechaExp }}</p>
+          <h2 class="text-xl font-black italic uppercase tracking-tighter text-white">{{ bizName }}</h2>
+          <p class="text-[9px] text-slate-500 font-bold uppercase mt-1">Vence: {{ fechaExp }}</p>
+          <!-- BOTÓN DE AJUSTES (AHORA MÁS VISIBLE) -->
+          <button @click="modals.config = true" class="mt-3 px-4 py-1.5 bg-slate-950 border border-slate-800 rounded-full text-[10px] font-black uppercase text-purple-400 tracking-widest">⚙️ Ajustes Agenda</button>
         </div>
-        <button @click="togglePausa" :class="estaPausado ? 'bg-rose-600 shadow-rose-600/30' : 'bg-emerald-600 shadow-emerald-600/30'" class="px-4 py-2 rounded-xl text-[9px] font-black uppercase border border-white/10 shadow-lg">
+        <button @click="togglePausa" :class="estaPausado ? 'bg-rose-600' : 'bg-emerald-600'" class="px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg transition-all border border-white/10">
           {{ estaPausado ? 'Pausado' : 'Activo' }}
         </button>
       </header>
 
+      <!-- LINK DE RESERVAS (LA TARJETA QUE FALTABA) -->
+      <div class="bg-slate-900/50 p-6 rounded-[2.5rem] border border-slate-800 text-center space-y-4 shadow-xl">
+        <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block">Link para tus Clientes</span>
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-[10px] font-mono truncate text-purple-400/80 mb-2">{{ clientLink }}</div>
+        <button @click="copyLink" class="w-full py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-slate-700 shadow-lg">
+          {{ copied ? "¡COPIADO CON ÉXITO!" : "Copiar Enlace para Instagram" }}
+        </button>
+      </div>
+
+      <!-- VENTAS -->
       <div class="grid grid-cols-2 gap-4">
-        <div class="bg-slate-900 p-5 rounded-[2rem] border border-slate-800">
-          <span class="text-[9px] text-slate-500 font-black uppercase tracking-widest block mb-1">Ganancia Hoy</span>
-          <span class="text-2xl font-black italic tracking-tighter">${{ salesToday.toLocaleString() }}</span>
+        <div class="bg-slate-900 p-5 rounded-[2rem] border border-slate-800 shadow-lg">
+          <span class="text-[9px] text-slate-500 font-black uppercase tracking-widest block mb-1">Hoy</span>
+          <span class="text-2xl font-black italic tracking-tighter text-white">${{ salesToday.toLocaleString() }}</span>
         </div>
-        <div class="bg-slate-900 p-5 rounded-[2rem] border border-slate-800">
-          <span class="text-[9px] text-slate-500 font-black uppercase tracking-widest block mb-1">Este Mes</span>
+        <div class="bg-slate-900 p-5 rounded-[2rem] border border-slate-800 shadow-lg">
+          <span class="text-[9px] text-slate-500 font-black uppercase tracking-widest block mb-1">Mes</span>
           <span class="text-2xl font-black italic tracking-tighter text-emerald-400">${{ salesMonth.toLocaleString() }}</span>
         </div>
       </div>
 
-      <div class="space-y-3">
-        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] px-2 flex justify-between items-center">Agenda de Hoy <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span></h3>
-        <div v-if="citasHoy.length === 0" class="py-16 text-center text-[10px] text-slate-700 font-bold uppercase tracking-widest italic bg-slate-900/10 rounded-3xl border border-dashed border-slate-800">No hay turnos para hoy</div>
+      <!-- AGENDA -->
+      <div class="space-y-4">
+        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] px-2">Agenda de Hoy</h3>
+        <div v-if="citasHoy.length === 0" class="py-16 text-center text-[11px] text-slate-700 font-bold uppercase tracking-widest italic bg-slate-900/20 rounded-[2.5rem] border border-dashed border-slate-800">No hay turnos para hoy.</div>
         
         <div v-for="c in citasHoy" :key="c.id" class="bg-slate-900 p-5 rounded-[2rem] border border-slate-800 flex justify-between items-center shadow-md animate-in slide-in-from-bottom duration-300">
           <div>
@@ -75,14 +82,48 @@
             <p class="text-[10px] text-purple-400 font-bold mt-1 tracking-widest">{{ c.hora_turno }}</p>
           </div>
           <div class="flex gap-2">
-            <button v-if="!c.valor_cobrado" @click="cobrar(c.id)" class="bg-purple-600 text-[9px] px-4 py-2 rounded-xl font-black uppercase italic tracking-tighter">Cobrar</button>
-            <span v-else class="text-emerald-400 font-black italic text-xs pr-2">${{ c.valor_cobrado.toLocaleString() }}</span>
-            <button @click="eliminar(c.id)" class="text-slate-600 px-1 text-lg">✕</button>
+            <button v-if="!c.valor_cobrado" @click="openCobrar(c.id)" class="bg-purple-600 hover:bg-purple-500 text-[9px] px-4 py-2 rounded-xl font-black uppercase italic">Cobrar</button>
+            <span v-else class="text-emerald-400 font-black italic text-sm pr-2">${{ c.valor_cobrado.toLocaleString() }}</span>
+            <button @click="eliminar(c.id)" class="text-slate-700 px-1 text-xl hover:text-rose-500 transition-colors">✕</button>
           </div>
         </div>
       </div>
       
-      <button @click="logout" class="w-full py-10 text-[9px] font-black text-slate-800 uppercase tracking-[0.5em]">Cerrar Sesión</button>
+      <button @click="logout" class="w-full py-10 text-[9px] font-black text-slate-800 uppercase tracking-[0.5em] hover:text-slate-600 transition-all">Cerrar Sesión</button>
+
+      <!-- MODALES PERSONALIZADOS -->
+      
+      <!-- Modal Ajustes (MÁS GRANDE Y CLARO) -->
+      <div v-if="modals.config" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-[3rem] w-full max-w-sm space-y-6 shadow-2xl animate-in zoom-in duration-300">
+          <h3 class="text-xl font-black italic uppercase text-center text-purple-400">Configuración</h3>
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Abre</label><input v-model="config.inicio" type="time" class="w-full p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs text-white outline-none"></div>
+              <div><label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Cierra</label><input v-model="config.fin" type="time" class="w-full p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs text-white outline-none"></div>
+            </div>
+            <div>
+              <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Duración (Minutos)</label>
+              <input v-model.number="config.duracion" type="number" step="5" min="5" class="w-full p-4 bg-slate-950 rounded-2xl border border-slate-800 text-sm font-black text-white outline-none focus:border-purple-600">
+            </div>
+          </div>
+          <div class="flex flex-col gap-2 pt-2">
+            <button @click="saveConfig" class="w-full py-4 bg-purple-600 rounded-2xl font-black italic uppercase text-xs tracking-widest shadow-lg">Guardar Cambios</button>
+            <button @click="modals.config = false" class="w-full py-2 text-[9px] font-bold text-slate-600 uppercase">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Cobrar -->
+      <div v-if="modals.cobrar" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md">
+        <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[3rem] w-full max-w-sm space-y-6 shadow-2xl animate-in zoom-in duration-300">
+          <h3 class="text-xl font-black italic uppercase text-center text-emerald-400">Cobrar Servicio</h3>
+          <input v-model.number="cobroInput" type="number" placeholder="Ej: 15000" class="w-full p-5 bg-slate-950 rounded-2xl border border-slate-800 text-3xl font-black italic text-center text-white outline-none focus:border-emerald-500">
+          <button @click="confirmCobrar" class="w-full py-4 bg-emerald-600 rounded-2xl font-black italic uppercase text-xs tracking-widest shadow-lg">Finalizar Cobro</button>
+          <button @click="modals.cobrar = false" class="w-full py-2 text-[9px] font-bold text-slate-600 uppercase">Volver</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -93,7 +134,6 @@
     createApp({
       setup() {
         const auth = ref(false);
-        // SEGURIDAD: Solo entra en modo registro si existe la clave secreta de Wompi
         const isReg = ref(new URLSearchParams(window.location.search).get('secret') === 'pago_exitoso');
         const bizId = ref(null);
         const bizName = ref('');
@@ -101,7 +141,12 @@
         const vencido = ref(false);
         const fechaExp = ref('');
         const citas = ref([]);
+        const copied = ref(false);
         const form = ref({ name: '', tel: '', pass: '' });
+        const config = ref({ inicio: '08:00', fin: '18:00', duracion: 60 });
+        const modals = ref({ config: false, cobrar: false });
+        const cobroInput = ref(null);
+        const selectedId = ref(null);
 
         const clientLink = computed(() => `${window.location.origin}/reserva?id=${bizId.value}`);
 
@@ -123,46 +168,23 @@
         const loginSuccess = (x) => {
           const hoy = new Date();
           const exp = new Date(x.fecha_expiracion);
-          if (hoy > exp) {
-            vencido.value = true;
-            return;
-          }
-          bizId.value = x.id;
-          bizName.value = x.nombre_negocio;
-          estaPausado.value = x.esta_pausado;
+          if (hoy > exp) { vencido.value = true; return; }
+          bizId.value = x.id; bizName.value = x.nombre_negocio; estaPausado.value = x.esta_pausado;
           fechaExp.value = exp.toLocaleDateString();
-          localStorage.setItem('zapicitas_biz_id', x.id);
-          auth.value = true;
-          fetchTodo();
-          listenRealtime();
-          // Limpiar URL para seguridad
-          window.history.replaceState({}, document.title, "/admin");
-        };
-
-        const checkSession = async () => {
-          const savedId = localStorage.getItem('zapicitas_biz_id');
-          if (savedId) {
-            const { data: x } = await sb.from('perfil_barberia').select('*').eq('id', savedId).single();
-            if (x) loginSuccess(x);
-          }
+          config.value = { inicio: x.hora_inicio || '08:00', fin: x.hora_fin || '18:00', duracion: x.duracion_minutos || 60 };
+          localStorage.setItem('zapicitas_id', x.id);
+          auth.value = true; fetchTodo();
+          sb.channel('realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'citas', filter: `barberia_id=eq.${x.id}` }, () => fetchTodo()).subscribe();
         };
 
         const handleAuth = async () => {
           if (isReg.value) {
-            const expDate = new Date();
-            expDate.setDate(expDate.getDate() + 30);
-            const { data: n } = await sb.from('perfil_barberia').insert([{ 
-              nombre_negocio: form.value.name, 
-              celular: form.value.tel, 
-              clave_acceso: form.value.pass,
-              fecha_expiracion: expDate.toISOString()
-            }]).select().single();
-            if (n) loginSuccess(n);
-            else alert("Este número ya está registrado.");
+            const exp = new Date(); exp.setDate(exp.getDate() + 30);
+            const { data: n } = await sb.from('perfil_barberia').insert([{ nombre_negocio: form.value.name, celular: form.value.tel, clave_acceso: form.value.pass, fecha_expiracion: exp.toISOString() }]).select().single();
+            if (n) loginSuccess(n); else alert("Error al registrar.");
           } else {
             const { data: x } = await sb.from('perfil_barberia').select('*').eq('celular', form.value.tel).single();
-            if (x && x.clave_acceso === form.value.pass) loginSuccess(x);
-            else alert("Credenciales incorrectas.");
+            if (x && x.clave_acceso === form.value.pass) loginSuccess(x); else alert("Acceso incorrecto.");
           }
         };
 
@@ -171,8 +193,9 @@
           if (data) citas.value = data;
         };
 
-        const listenRealtime = () => {
-          sb.channel('db-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'citas', filter: `barberia_id=eq.${bizId.value}` }, () => fetchTodo()).subscribe();
+        const saveConfig = async () => {
+          await sb.from('perfil_barberia').update({ hora_inicio: config.value.inicio, hora_fin: config.value.fin, duracion_minutos: config.value.duracion }).eq('id', bizId.value);
+          modals.value.config = false; alert("Agenda Actualizada!");
         };
 
         const togglePausa = async () => {
@@ -180,29 +203,23 @@
           await sb.from('perfil_barberia').update({ esta_pausado: estaPausado.value }).eq('id', bizId.value);
         };
 
-        const cobrar = async (id) => {
-          const v = prompt("Monto cobrado:");
-          if (v) {
-            await sb.from('citas').update({ valor_cobrado: Number(v), estado: 'paid' }).eq('id', id);
-            fetchTodo();
-          }
+        const openCobrar = (id) => { selectedId.value = id; modals.value.cobrar = true; };
+        const confirmCobrar = async () => {
+          if (!cobroInput.value) return;
+          await sb.from('citas').update({ valor_cobrado: Number(cobroInput.value), estado: 'paid' }).eq('id', selectedId.value);
+          modals.value.cobrar = false; cobroInput.value = null; fetchTodo();
         };
 
-        const eliminar = async (id) => {
-          if (confirm("¿Eliminar cita?")) {
-            await sb.from('citas').delete().eq('id', id);
-            fetchTodo();
-          }
-        };
+        const eliminar = async (id) => { if(confirm('¿Eliminar cita?')) { await sb.from('citas').delete().eq('id', id); fetchTodo(); } };
+        const copyLink = () => { navigator.clipboard.writeText(clientLink.value); copied.value = true; setTimeout(() => copied.value = false, 2000); };
+        const logout = () => { localStorage.removeItem('zapicitas_id'); location.reload(); };
 
-        const logout = () => {
-          localStorage.removeItem('zapicitas_biz_id');
-          location.reload();
-        };
+        onMounted(async () => {
+          const sid = localStorage.getItem('zapicitas_id');
+          if (sid) { const { data } = await sb.from('perfil_barberia').select('*').eq('id', sid).single(); if (data) loginSuccess(data); }
+        });
 
-        onMounted(checkSession);
-
-        return { auth, isReg, bizName, estaPausado, vencido, fechaExp, salesToday, salesMonth, citasHoy, clientLink, form, handleAuth, togglePausa, cobrar, eliminar, logout };
+        return { auth, isReg, bizName, estaPausado, vencido, fechaExp, salesToday, salesMonth, citasHoy, clientLink, form, config, modals, cobroInput, handleAuth, togglePausa, saveConfig, openCobrar, confirmCobrar, eliminar, copyLink, logout, copied };
       }
     }).mount('#app');
   </script>
