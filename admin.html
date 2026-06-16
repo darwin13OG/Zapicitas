@@ -8,74 +8,97 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen antialiased font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased">
   <div id="app" v-cloak>
     <!-- LOGIN -->
     <div v-if="!auth" class="max-w-md mx-auto py-20 px-6">
-      <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 space-y-6 shadow-2xl">
-        <h2 class="text-2xl font-bold text-center">🔐 Acceso Admin</h2>
+      <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 space-y-6">
+        <h2 class="text-2xl font-bold text-center">Acceso Administrador</h2>
         <form @submit.prevent="handleAuth" class="space-y-4">
-          <input v-model="form.tel" type="tel" placeholder="Tu Celular" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none">
-          <input v-model="form.pass" type="password" placeholder="Tu Contraseña" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none">
-          <button type="submit" class="w-full py-4 bg-purple-600 rounded-xl font-bold shadow-lg shadow-purple-600/20">ENTRAR AL PANEL</button>
+          <input v-model="form.tel" type="tel" placeholder="Celular" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none">
+          <input v-model="form.pass" type="password" placeholder="Contraseña" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none">
+          <button type="submit" class="w-full py-4 bg-purple-600 rounded-xl font-bold">ENTRAR</button>
         </form>
       </div>
     </div>
 
     <!-- PANEL PRINCIPAL -->
-    <div v-else class="max-w-md mx-auto p-4 space-y-6">
-      <header class="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex justify-between items-center shadow-lg">
+    <div v-else class="max-w-md mx-auto p-4 space-y-6 animate-in fade-in duration-500">
+      <header class="bg-slate-900 p-5 rounded-3xl border border-slate-800 flex justify-between items-center shadow-xl">
         <div>
-          <h2 class="font-bold text-white text-lg">💼 {{ bizName }}</h2>
-          <p class="text-[10px] text-slate-500 uppercase tracking-widest">Panel Administrativo</p>
+          <h2 class="font-bold text-white leading-tight">{{ bizName }}</h2>
+          <button @click="showConfig = !showConfig" class="text-[9px] text-purple-400 font-bold uppercase tracking-widest mt-1">⚙️ Ajustes de Agenda</button>
         </div>
-        <button @click="togglePausa" :class="estaPausado ? 'bg-rose-600 shadow-rose-600/20' : 'bg-emerald-600 shadow-emerald-600/20'" class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase shadow-lg transition-all">
+        <button @click="togglePausa" :class="estaPausado ? 'bg-rose-600' : 'bg-emerald-600'" class="px-4 py-2 rounded-xl text-[9px] font-black uppercase">
           {{ estaPausado ? 'Pausado' : 'Activo' }}
         </button>
       </header>
 
-      <!-- SECCION DE VENTAS -->
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl">
-          <span class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Ganancia Hoy</span>
-          <span class="text-xl font-black text-white">${{ salesToday.toLocaleString() }}</span>
+      <!-- CONFIGURACION DE HORARIOS -->
+      <div v-if="showConfig" class="bg-slate-900 p-6 rounded-3xl border border-purple-500/30 space-y-4 animate-in zoom-in duration-300">
+        <h3 class="text-xs font-bold uppercase text-purple-300">Configuración de Agenda</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-[9px] text-slate-500 uppercase font-bold">Abre a las:</label>
+            <input v-model="config.inicio" type="time" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[9px] text-slate-500 uppercase font-bold">Cierra a las:</label>
+            <input v-model="config.fin" type="time" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs">
+          </div>
         </div>
-        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl">
-          <span class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Ganancia Mes</span>
+        <div class="space-y-1">
+          <label class="text-[9px] text-slate-500 uppercase font-bold">Duración de cada cita:</label>
+          <select v-model="config.duracion" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+            <option :value="30">30 Minutos</option>
+            <option :value="45">45 Minutos</option>
+            <option :value="60">1 Hora (Recomendado)</option>
+            <option :value="90">1 Hora y 30 Minutos</option>
+          </select>
+        </div>
+        <button @click="saveConfig" class="w-full py-3 bg-purple-600 rounded-xl text-xs font-bold">GUARDAR CAMBIOS</button>
+      </div>
+
+      <!-- VENTAS -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800">
+          <span class="text-[9px] text-slate-500 font-bold uppercase block mb-1">Hoy</span>
+          <span class="text-xl font-black">${{ salesToday.toLocaleString() }}</span>
+        </div>
+        <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800">
+          <span class="text-[9px] text-slate-500 font-bold uppercase block mb-1">Este Mes</span>
           <span class="text-xl font-black text-emerald-400">${{ salesMonth.toLocaleString() }}</span>
         </div>
       </div>
 
-      <!-- LINK DE CLIENTES -->
-      <div class="bg-purple-900/10 p-5 rounded-3xl border border-purple-500/20 text-center space-y-3">
-        <span class="text-[10px] font-bold text-purple-300 uppercase tracking-widest block">Tu link de reservas</span>
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[10px] font-mono truncate text-slate-500">{{ clientLink }}</div>
-        <button @click="copyLink" class="w-full py-2 bg-purple-600 rounded-xl text-xs font-bold">{{ copied ? "¡COPIADO!" : "COPIAR LINK" }}</button>
-      </div>
-
-      <!-- LISTA DE CITAS DEL DIA -->
+      <!-- LISTA DE CITAS -->
       <div class="space-y-3">
-        <h3 class="text-xs font-bold text-slate-500 uppercase px-1">Próximas Citas (Hoy)</h3>
-        <div v-if="citasHoy.length === 0" class="py-10 text-center text-xs text-slate-700 bg-slate-900/20 rounded-2xl border border-dashed border-slate-800">No hay citas para hoy</div>
-        <div v-for="c in citasHoy" :key="c.id" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex justify-between items-center shadow-sm">
+        <div class="flex justify-between items-center px-1">
+          <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Citas de Hoy</h3>
+          <span class="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        </div>
+        <div v-if="citasHoy.length === 0" class="py-10 text-center text-xs text-slate-600 bg-slate-900/20 rounded-3xl border border-dashed border-slate-800 italic">No hay citas registradas para hoy.</div>
+        <div v-for="c in citasHoy" :key="c.id" class="bg-slate-900 p-5 rounded-3xl border border-slate-800 flex justify-between items-center shadow-md">
           <div>
-            <p class="text-sm font-bold text-white">{{ c.nombre_cliente }}</p>
-            <p class="text-[10px] text-purple-400 font-bold">{{ c.hora_turno }}</p>
+            <p class="text-sm font-bold text-white leading-none">{{ c.nombre_cliente }}</p>
+            <p class="text-[10px] text-purple-400 font-bold mt-2 uppercase tracking-tighter">{{ c.hora_turno }}</p>
           </div>
           <div class="flex gap-2">
-            <button v-if="!c.valor_cobrado" @click="cobrar(c.id)" class="bg-emerald-600 text-[9px] px-3 py-1.5 rounded-lg font-bold uppercase">Cobrar</button>
-            <span v-else class="text-emerald-400 font-bold text-xs">${{ c.valor_cobrado.toLocaleString() }}</span>
+            <button v-if="!c.valor_cobrado" @click="cobrar(c.id)" class="bg-emerald-600 text-[9px] px-3 py-2 rounded-xl font-bold uppercase">Cobrar</button>
+            <span v-else class="text-emerald-400 font-black text-xs">${{ c.valor_cobrado.toLocaleString() }}</span>
             <button @click="eliminar(c.id)" class="text-slate-600 px-1 text-lg">✕</button>
           </div>
         </div>
       </div>
+      
+      <button @click="logout" class="w-full py-4 text-[9px] font-bold text-slate-700 uppercase tracking-[0.3em]">Cerrar Sesión</button>
     </div>
   </div>
 
   <style>[v-cloak] { display: none; }</style>
 
   <script>
-    const { createApp, ref, computed } = Vue;
+    const { createApp, ref, computed, onMounted } = Vue;
     const sb = supabase.createClient("https://tsasorwwbbscnbvoyyhf.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzYXNvcnd3YmJzY25idm95eWhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTg5NjEsImV4cCI6MjA5NzE3NDk2MX0.-A0fl15WmXcnU-81iUazvy-GBrS22ktaKcoQx56jmZ8");
 
     createApp({
@@ -85,10 +108,9 @@
         const bizName = ref('');
         const estaPausado = ref(false);
         const citas = ref([]);
-        const copied = ref(false);
+        const showConfig = ref(false);
         const form = ref({ tel: '', pass: '' });
-
-        const clientLink = computed(() => `${window.location.origin}/reserva?id=${bizId.value}`);
+        const config = ref({ inicio: '08:00', fin: '18:00', duracion: 60 });
 
         const salesToday = computed(() => {
           const hoy = new Date().toISOString().split('T')[0];
@@ -108,13 +130,34 @@
         const handleAuth = async () => {
           const { data: x } = await sb.from('perfil_barberia').select('*').eq('celular', form.value.tel).single();
           if(x && x.clave_acceso === form.value.pass) {
-            bizId.value = x.id; bizName.value = x.nombre_negocio; estaPausado.value = x.esta_pausado; auth.value = true; fetchTodo();
-          } else { alert("Error de acceso"); }
+            bizId.value = x.id; bizName.value = x.nombre_negocio; estaPausado.value = x.esta_pausado;
+            config.value = { inicio: x.hora_inicio, fin: x.hora_fin, duracion: x.duracion_minutos };
+            auth.value = true;
+            fetchTodo();
+            listenRealtime();
+          } else { alert("Acceso denegado."); }
+        };
+
+        const listenRealtime = () => {
+          sb.channel('custom-all-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'citas', filter: `barberia_id=eq.${bizId.value}` }, () => {
+              fetchTodo();
+            }).subscribe();
         };
 
         const fetchTodo = async () => {
           const { data } = await sb.from('citas').select('*').eq('barberia_id', bizId.value);
           if(data) citas.value = data;
+        };
+
+        const saveConfig = async () => {
+          await sb.from('perfil_barberia').update({
+            hora_inicio: config.value.inicio,
+            hora_fin: config.value.fin,
+            duracion_minutos: config.value.duracion
+          }).eq('id', bizId.value);
+          showConfig.value = false;
+          alert("Agenda actualizada.");
         };
 
         const togglePausa = async () => {
@@ -123,7 +166,7 @@
         };
 
         const cobrar = async (id) => {
-          const val = prompt('Valor del servicio cobrado:');
+          const val = prompt('Monto cobrado:');
           if(val) {
             await sb.from('citas').update({ valor_cobrado: Number(val), estado: 'paid' }).eq('id', id);
             fetchTodo();
@@ -134,13 +177,9 @@
           if(confirm('¿Eliminar cita?')) { await sb.from('citas').delete().eq('id', id); fetchTodo(); }
         };
 
-        const copyLink = () => {
-          navigator.clipboard.writeText(clientLink.value);
-          copied.value = true;
-          setTimeout(() => copied.value = false, 2000);
-        };
+        const logout = () => location.reload();
 
-        return { auth, bizName, estaPausado, salesToday, salesMonth, citasHoy, clientLink, copied, form, handleAuth, togglePausa, cobrar, eliminar, copyLink };
+        return { auth, bizName, estaPausado, salesToday, salesMonth, citasHoy, form, showConfig, config, handleAuth, togglePausa, cobrar, eliminar, logout, saveConfig };
       }
     }).mount('#app');
   </script>
