@@ -4,15 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ZapiCitas | Reserva tu Turno</title>
-  
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-  
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
   <style>
     .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.3); }
@@ -20,7 +16,6 @@
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
-
   <div id="root"></div>
 
   <script type="text/babel">
@@ -29,9 +24,6 @@
     const SUPABASE_URL = "https://tsasorwwbbscnbvoyyhf.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzYXNvcnd3YmJzY25idm95eWhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTg5NjEsImV4cCI6MjA5NzE3NDk2MX0.-A0fl15WmXcnU-81iUazvy-GBrS22ktaKcoQx56jmZ8";
     const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // ID de barbería por defecto para las pruebas en producción
-    const DEPLOYED_BARBERIA_ID = "ef76e82a-e2ba-4b47-97be-43a968600000"; 
 
     const START_HOUR = 8;
     const END_HOUR = 18;
@@ -53,9 +45,7 @@
       return slots;
     };
 
-    const getSpanishDayName = (date) => { const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']; return days[date.getDay()]; };
-    const getSpanishMonthName = (date) => { const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']; return months[date.getMonth()]; };
-
+    const getSpanishDayName = (date) => ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][date.getDay()];
     const getNextSevenDays = () => {
       const days = [];
       for (let i = 0; i < 7; i++) {
@@ -63,7 +53,7 @@
         date.setDate(date.getDate() + i);
         days.push({
           isoString: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
-          dayName: getSpanishDayName(date), dayNumber: date.getDate(), monthName: getSpanishMonthName(date)
+          dayName: getSpanishDayName(date), dayNumber: date.getDate()
         });
       }
       return days;
@@ -73,139 +63,151 @@
       const daysList = useMemo(() => getNextSevenDays(), []);
       const timeSlots = useMemo(() => generate30MinSlots(START_HOUR, END_HOUR), []);
 
+      const [targetBarberiaId, setTargetBarberiaId] = useState('');
+      const [barberiaName, setBarberiaName] = useState('ZapiCitas');
+      const [allBarberias, setAllBarberias] = useState([]);
+      const [hasIdInUrl, setHasIdInUrl] = useState(false);
+
       const [selectedDate, setSelectedDate] = useState(daysList[0].isoString);
       const [selectedTime, setSelectedTime] = useState('');
       const [clientName, setClientName] = useState('');
       const [clientPhone, setClientPhone] = useState('');
       const [bookingSuccess, setBookingSuccess] = useState(false);
-      
       const [bookedAppointments, setBookedAppointments] = useState([]);
       const [loading, setLoading] = useState(false);
 
       useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const idParam = urlParams.get('id');
+
+        async function resolverNegocio() {
+          if (idParam) {
+            setHasIdInUrl(true);
+            setTargetBarberiaId(idParam);
+            const { data } = await supabase.from('perfil_barberia').select('nombre_negocio').eq('id', idParam).single();
+            if (data) setBarberiaName(data.nombre_negocio);
+          } else {
+            setHasIdInUrl(false);
+            const { data } = await supabase.from('perfil_barberia').select('id, nombre_negocio');
+            if (data && data.length > 0) {
+              setAllBarberias(data);
+              setTargetBarberiaId(data[0].id);
+              setBarberiaName(data[0].nombre_negocio);
+            }
+          }
+        }
+        resolverNegocio();
+      }, []);
+
+      useEffect(() => {
+        if (!hasIdInUrl && targetBarberiaId && allBarberias.length > 0) {
+          const match = allBarberias.find(b => b.id === targetBarberiaId);
+          if (match) setBarberiaName(match.nombre_negocio);
+        }
+      }, [targetBarberiaId, allBarberias, hasIdInUrl]);
+
+      useEffect(() => {
+        if (!targetBarberiaId) return;
         async function fetchOcupados() {
           setLoading(true);
-          const { data, error } = await supabase
-            .from('citas')
+          const { data } = await supabase.from('citas')
             .select('hora_turno')
+            .eq('barberia_id', targetBarberiaId)
             .eq('fecha_turno', selectedDate);
           
-          if (!error && data) {
-            setBookedAppointments(data.map(c => c.hora_turno));
-          }
+          if (data) setBookedAppointments(data.map(c => c.hora_turno));
           setLoading(false);
         }
         fetchOcupados();
-      }, [selectedDate]);
+      }, [selectedDate, targetBarberiaId]);
 
       const handleConfirmBooking = async (e) => {
         e.preventDefault();
-        if (!selectedTime || !clientName.trim() || !clientPhone.trim()) return;
+        if (!targetBarberiaId || !selectedTime || !clientName.trim() || !clientPhone.trim()) return;
 
-        // Intentar obtener la primera barbería de la base de datos de manera dinámica si existe
-        let targetId = DEPLOYED_BARBERIA_ID;
-        const { data: barb } = await supabase.from('perfil_barberia').select('id').limit(1);
-        if (barb && barb.length > 0) {
-          targetId = barb[0].id;
-        }
+        const { error } = await supabase.from('citas').insert([{
+          barberia_id: targetBarberiaId,
+          nombre_cliente: clientName.trim(),
+          celular_cliente: clientPhone.trim(),
+          fecha_turno: selectedDate,
+          hora_turno: selectedTime,
+          estado: 'pending'
+        }]);
 
-        const { error } = await supabase
-          .from('citas')
-          .insert([{
-            barberia_id: targetId,
-            nombre_cliente: clientName.trim(),
-            celular_cliente: clientPhone.trim(),
-            fecha_turno: selectedDate,
-            hora_turno: selectedTime,
-            estado: 'pending'
-          }]);
-
-        if (error) {
-          alert("Hubo un problema al guardar tu turno: " + error.message);
-        } else {
-          setBookingSuccess(true);
-        }
+        if (error) alert("Error: " + error.message);
+        else setBookingSuccess(true);
       };
-
-      const selectedDayDetails = daysList.find(d => d.isoString === selectedDate);
 
       return (
         <div className="max-w-md mx-auto w-full px-4 py-6 flex flex-col min-h-screen justify-between">
           <header className="text-center py-4 space-y-1">
             <span className="text-[10px] uppercase font-bold tracking-widest text-purple-400 bg-purple-950/40 border border-purple-900/30 px-3 py-1 rounded-full">Reserva en Línea</span>
-            <h1 className="text-2xl font-black text-white tracking-tight mt-2">💈 Barbería Agenda Real</h1>
-            <p className="text-xs text-slate-400">Separa tu espacio de forma inmediata.</p>
+            <h1 className="text-2xl font-black text-white mt-2">💈 {barberiaName}</h1>
+            <p className="text-xs text-slate-400">Separa tu espacio en tiempo real.</p>
           </header>
 
           {bookingSuccess ? (
-            <div className="my-auto py-8 px-6 bg-slate-900/40 border border-slate-900 rounded-3xl text-center space-y-6">
-              <div className="h-16 w-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto">
-                <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+            <div className="my-auto py-8 px-6 bg-slate-900/40 border border-slate-900 rounded-3xl text-center space-y-4">
+              <h2 className="text-xl font-bold text-emerald-400">¡Turno Reservado!</h2>
+              <div className="bg-slate-950 border border-slate-850 p-4 rounded-xl text-left space-y-1 text-xs">
+                <p><strong className="text-slate-400">Día:</strong> {selectedDate}</p>
+                <p><strong className="text-slate-400">Hora:</strong> {selectedTime}</p>
+                <p><strong className="text-slate-400">Nombre:</strong> {clientName}</p>
               </div>
-              <div className="space-y-2">
-                <h2 className="text-xl font-bold text-white">¡Turno Reservado con éxito!</h2>
-                <p className="text-xs text-slate-400">Guardado de forma segura en el sistema.</p>
-              </div>
-              <div className="bg-slate-950 border border-slate-850 p-4 rounded-2xl text-left space-y-2 text-xs">
-                <p className="text-slate-400"><strong className="text-slate-200">Fecha:</strong> {selectedDayDetails?.dayName} {selectedDayDetails?.dayNumber}</p>
-                <p className="text-slate-400"><strong className="text-slate-200">Hora:</strong> {selectedTime}</p>
-                <p className="text-slate-400"><strong className="text-slate-200">Cliente:</strong> {clientName}</p>
-              </div>
-              <button onClick={() => { setBookingSuccess(false); setClientName(''); setClientPhone(''); setSelectedTime(''); }} className="w-full py-3.5 bg-slate-900 text-slate-300 font-bold rounded-xl text-xs transition-all">Reservar otro turno</button>
+              <button onClick={() => { setBookingSuccess(false); setClientName(''); setClientPhone(''); setSelectedTime(''); }} className="w-full py-3 bg-purple-600 font-bold rounded-xl text-xs">Reservar otro turno</button>
             </div>
           ) : (
-            <div className="space-y-6 my-auto">
+            <div className="space-y-5 my-auto">
+              {!hasIdInUrl && allBarberias.length > 0 && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Selecciona el Local</label>
+                  <select value={targetBarberiaId} onChange={(e) => setTargetBarberiaId(e.target.value)} className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none">
+                    {allBarberias.map(b => <option key={b.id} value={b.id}>{b.nombre_negocio}</option>)}
+                  </select>
+                </div>
+              )}
+
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">1. Selecciona el Día</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase block">1. Selecciona el Día</label>
                 <div className="flex space-x-2 overflow-x-auto pb-1 custom-scrollbar">
-                  {daysList.map((d) => {
-                    const isSelected = selectedDate === d.isoString;
-                    return (
-                      <button key={d.isoString} type="button" onClick={() => { setSelectedDate(d.isoString); setSelectedTime(''); }} className={`px-4 py-3 rounded-2xl border flex flex-col items-center shrink-0 min-w-[65px] transition-all ${isSelected ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-900/40 border-slate-900 text-slate-400'}`}>
-                        <span className="text-[9px] uppercase font-bold tracking-tight opacity-70">{d.dayName}</span>
-                        <span className="text-base font-extrabold mt-0.5">{d.dayNumber}</span>
-                      </button>
-                    );
-                  })}
+                  {daysList.map((d) => (
+                    <button key={d.isoString} type="button" onClick={() => { setSelectedDate(d.isoString); setSelectedTime(''); }} className={`px-4 py-2.5 rounded-2xl border flex flex-col items-center shrink-0 min-w-[60px] ${selectedDate === d.isoString ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-900/40 border-slate-900 text-slate-400'}`}>
+                      <span className="text-[8px] uppercase font-bold">{d.dayName}</span>
+                      <span className="text-sm font-extrabold mt-0.5">{d.dayNumber}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">2. Selecciona la Hora</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase block">2. Selecciona la Hora</label>
                 {loading ? (
-                  <div className="text-center py-6 text-xs text-slate-500">Sincronizando horarios libres...</div>
+                  <div className="text-center py-4 text-xs text-slate-500">Buscando espacios...</div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-2 max-h-[160px] overflow-y-auto custom-scrollbar p-2 bg-slate-900/20 border border-slate-900 rounded-2xl">
+                  <div className="grid grid-cols-3 gap-1.5 max-h-[140px] overflow-y-auto custom-scrollbar p-2 bg-slate-900/20 border border-slate-900 rounded-2xl">
                     {timeSlots.map((slot) => {
                       const isBooked = bookedAppointments.includes(slot.formatted);
-                      const isSelected = selectedTime === slot.formatted;
-                      if (isBooked) return <div key={slot.rawValue} className="py-3 border border-slate-950 bg-slate-950/40 text-slate-700 text-xs text-center line-through rounded-xl select-none">Ocupado</div>;
-                      return <button key={slot.rawValue} type="button" onClick={() => setSelectedTime(slot.formatted)} className={`py-3 border text-xs font-bold text-center rounded-xl transition-all ${isSelected ? 'bg-purple-600/20 border-purple-500 text-purple-300' : 'bg-slate-950 border-slate-850 text-slate-300'}`}>{slot.formatted}</button>;
+                      if (isBooked) return <div key={slot.rawValue} className="py-2.5 border border-slate-950 bg-slate-950/40 text-slate-700 text-[10px] text-center line-through rounded-xl">Ocupado</div>;
+                      return <button key={slot.rawValue} type="button" onClick={() => setSelectedTime(slot.formatted)} className={`py-2.5 border text-[10px] font-bold text-center rounded-xl ${selectedTime === slot.formatted ? 'bg-purple-600/20 border-purple-500 text-purple-300' : 'bg-slate-950 border-slate-850 text-slate-300'}`}>{slot.formatted}</button>;
                     })}
                   </div>
                 )}
               </div>
 
-              <form onSubmit={handleConfirmBooking} className="space-y-4 bg-slate-900/40 border border-slate-900 p-4 rounded-2xl">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block -mb-2">3. Tus Datos</label>
-                <div className="space-y-3 pt-2">
-                  <input type="text" required placeholder="Tu nombre completo" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full px-4 py-3 bg-slate-950 border border-slate-800 focus:border-purple-500 rounded-xl text-xs outline-none text-slate-200" />
-                  <input type="tel" required placeholder="Tu número de celular" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full px-4 py-3 bg-slate-950 border border-slate-800 focus:border-purple-500 rounded-xl text-xs outline-none text-slate-200" />
-                </div>
-                <button type="submit" disabled={!selectedTime || !clientName.trim() || !clientPhone.trim()} className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs shadow-lg disabled:opacity-50">
-                  {selectedTime ? `Confirmar Turno para las ${selectedTime}` : 'Selecciona una hora para continuar'}
+              <form onSubmit={handleConfirmBooking} className="space-y-3 bg-slate-900/40 border border-slate-900 p-4 rounded-2xl">
+                <input type="text" required placeholder="Tu nombre" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 outline-none" />
+                <input type="tel" required placeholder="Tu número de celular" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 outline-none" />
+                <button type="submit" disabled={!selectedTime || !clientName.trim() || !clientPhone.trim()} className="w-full py-3 bg-purple-600 font-bold rounded-xl text-xs disabled:opacity-40">
+                  {selectedTime ? `Agendar para las ${selectedTime}` : 'Elige una hora libre'}
                 </button>
               </form>
             </div>
           )}
-
           <footer className="py-4 text-center text-[9px] text-slate-600 border-t border-slate-900 mt-auto"><p>ZapiCitas Agendamiento © 2026</p></footer>
         </div>
       );
     }
-
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
 </html>
