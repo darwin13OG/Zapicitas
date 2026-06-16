@@ -9,76 +9,61 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased font-sans">
-  
   <div id="app" v-cloak>
-    <!-- LOGIN / REGISTRO -->
+    <!-- LOGIN -->
     <div v-if="!auth" class="max-w-md mx-auto py-20 px-6">
       <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 space-y-6 shadow-2xl">
-        <h2 class="text-2xl font-bold text-center text-white">{{ isReg ? '📝 Nuevo Registro' : '🔐 Acceso Administrador' }}</h2>
+        <h2 class="text-2xl font-bold text-center">🔐 Acceso Admin</h2>
         <form @submit.prevent="handleAuth" class="space-y-4">
-          <input v-if="isReg" v-model="form.name" type="text" placeholder="Nombre de tu Negocio" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none focus:border-purple-600">
           <input v-model="form.tel" type="tel" placeholder="Tu Celular" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none">
           <input v-model="form.pass" type="password" placeholder="Tu Contraseña" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none">
-          <button type="submit" :disabled="loading" class="w-full py-4 bg-purple-600 rounded-xl font-bold shadow-lg transition-all">
-            {{ loading ? 'Procesando...' : (isReg ? 'Activar mi Negocio' : 'Entrar al Panel') }}
-          </button>
+          <button type="submit" class="w-full py-4 bg-purple-600 rounded-xl font-bold shadow-lg shadow-purple-600/20">ENTRAR AL PANEL</button>
         </form>
-        <!-- El botón de registro solo se muestra si el usuario viene de pagar o lo activa manualmente -->
-        <button v-if="showRegToggle" @click="isReg = !isReg" class="w-full text-xs text-purple-400 font-bold hover:underline">
-          {{ isReg ? '¿Ya tienes cuenta? Inicia Sesión' : '¿Acabas de pagar? Regístrate aquí' }}
-        </button>
       </div>
     </div>
 
     <!-- PANEL PRINCIPAL -->
     <div v-else class="max-w-md mx-auto p-4 space-y-6">
       <header class="bg-slate-900 p-5 rounded-2xl border border-slate-800 flex justify-between items-center shadow-lg">
-        <h2 class="font-bold text-white truncate max-w-[200px]">💼 {{ bizName }}</h2>
-        <button @click="logout" class="text-[10px] bg-slate-800 px-3 py-1.5 rounded-lg text-slate-400">Salir</button>
+        <div>
+          <h2 class="font-bold text-white text-lg">💼 {{ bizName }}</h2>
+          <p class="text-[10px] text-slate-500 uppercase tracking-widest">Panel Administrativo</p>
+        </div>
+        <button @click="togglePausa" :class="estaPausado ? 'bg-rose-600 shadow-rose-600/20' : 'bg-emerald-600 shadow-emerald-600/20'" class="px-4 py-2 rounded-xl text-[10px] font-bold uppercase shadow-lg transition-all">
+          {{ estaPausado ? 'Pausado' : 'Activo' }}
+        </button>
       </header>
 
-      <!-- LINK DE RESERVAS -->
-      <div class="bg-gradient-to-br from-purple-900/30 to-slate-950 p-6 rounded-3xl border border-purple-500/20 text-center space-y-3">
-        <span class="text-[10px] font-bold text-purple-300 uppercase tracking-widest block">Link para Instagram / Clientes</span>
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[10px] font-mono truncate text-slate-500">{{ clientLink }}</div>
-        <button @click="copyLink" class="w-full py-3 bg-purple-600 rounded-xl text-xs font-bold transition-all">
-          {{ copied ? "¡COPIADO CON ÉXITO!" : "COPIAR LINK DE RESERVAS" }}
-        </button>
-      </div>
-
-      <!-- INGRESOS -->
+      <!-- SECCION DE VENTAS -->
       <div class="grid grid-cols-2 gap-4">
-        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800">
-          <span class="text-[10px] font-bold text-slate-500 block">VENTAS HOY</span>
-          <span class="text-lg font-black text-emerald-400">${{ totalSales.toLocaleString() }}</span>
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl">
+          <span class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Ganancia Hoy</span>
+          <span class="text-xl font-black text-white">${{ salesToday.toLocaleString() }}</span>
         </div>
-        <button @click="showManual = !showManual" class="bg-slate-900 p-4 rounded-2xl border border-dashed border-purple-500/50 flex flex-col items-center justify-center">
-          <span class="text-xs font-bold text-purple-400">+ AGENDAR CITA</span>
-        </button>
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl">
+          <span class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Ganancia Mes</span>
+          <span class="text-xl font-black text-emerald-400">${{ salesMonth.toLocaleString() }}</span>
+        </div>
       </div>
 
-      <!-- FORMULARIO CITA MANUAL -->
-      <div v-if="showManual" class="bg-slate-900 p-6 rounded-3xl border border-purple-500/30 space-y-4 animate-in fade-in zoom-in duration-300">
-        <h3 class="text-sm font-bold text-white uppercase">Nueva Cita Manual</h3>
-        <input v-model="manual.cli" type="text" placeholder="Nombre Cliente" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs">
-        <div class="grid grid-cols-2 gap-2">
-          <input v-model="manual.date" type="date" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-[10px]">
-          <input v-model="manual.time" type="time" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-[10px]">
-        </div>
-        <button @click="addManual" class="w-full py-2.5 bg-purple-600 rounded-xl text-xs font-bold">Guardar en Agenda</button>
+      <!-- LINK DE CLIENTES -->
+      <div class="bg-purple-900/10 p-5 rounded-3xl border border-purple-500/20 text-center space-y-3">
+        <span class="text-[10px] font-bold text-purple-300 uppercase tracking-widest block">Tu link de reservas</span>
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[10px] font-mono truncate text-slate-500">{{ clientLink }}</div>
+        <button @click="copyLink" class="w-full py-2 bg-purple-600 rounded-xl text-xs font-bold">{{ copied ? "¡COPIADO!" : "COPIAR LINK" }}</button>
       </div>
 
-      <!-- LISTADO DE CITAS -->
+      <!-- LISTA DE CITAS DEL DIA -->
       <div class="space-y-3">
-        <h3 class="text-xs font-bold text-slate-500 uppercase px-1">Próximas Citas</h3>
-        <div v-if="citas.length === 0" class="py-10 text-center text-xs text-slate-700 bg-slate-900/10 rounded-2xl border border-dashed border-slate-800">No hay citas registradas</div>
-        <div v-for="c in citas" :key="c.id" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex justify-between items-center shadow-sm">
+        <h3 class="text-xs font-bold text-slate-500 uppercase px-1">Próximas Citas (Hoy)</h3>
+        <div v-if="citasHoy.length === 0" class="py-10 text-center text-xs text-slate-700 bg-slate-900/20 rounded-2xl border border-dashed border-slate-800">No hay citas para hoy</div>
+        <div v-for="c in citasHoy" :key="c.id" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex justify-between items-center shadow-sm">
           <div>
             <p class="text-sm font-bold text-white">{{ c.nombre_cliente }}</p>
-            <p class="text-[10px] text-purple-400 font-bold uppercase">{{ c.fecha_turno }} | {{ c.hora_turno }}</p>
+            <p class="text-[10px] text-purple-400 font-bold">{{ c.hora_turno }}</p>
           </div>
           <div class="flex gap-2">
-            <button v-if="!c.valor_cobrado" @click="cobrar(c.id)" class="bg-emerald-600 text-[9px] px-3 py-1 rounded-lg font-bold uppercase">Cobrar</button>
+            <button v-if="!c.valor_cobrado" @click="cobrar(c.id)" class="bg-emerald-600 text-[9px] px-3 py-1.5 rounded-lg font-bold uppercase">Cobrar</button>
             <span v-else class="text-emerald-400 font-bold text-xs">${{ c.valor_cobrado.toLocaleString() }}</span>
             <button @click="eliminar(c.id)" class="text-slate-600 px-1 text-lg">✕</button>
           </div>
@@ -90,56 +75,63 @@
   <style>[v-cloak] { display: none; }</style>
 
   <script>
-    const { createApp, ref, computed, onMounted } = Vue;
+    const { createApp, ref, computed } = Vue;
     const sb = supabase.createClient("https://tsasorwwbbscnbvoyyhf.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzYXNvcnd3YmJzY25idm95eWhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTg5NjEsImV4cCI6MjA5NzE3NDk2MX0.-A0fl15WmXcnU-81iUazvy-GBrS22ktaKcoQx56jmZ8");
 
     createApp({
       setup() {
         const auth = ref(false);
-        const loading = ref(false);
-        const copied = ref(false);
-        const isReg = ref(false);
-        const showRegToggle = ref(true); // Se puede activar con un parámetro secreto en la URL si quieres
         const bizId = ref(null);
         const bizName = ref('');
+        const estaPausado = ref(false);
         const citas = ref([]);
-        const showManual = ref(false);
-        const form = ref({ name: '', tel: '', pass: '' });
-        const manual = ref({ cli: '', date: '', time: '' });
+        const copied = ref(false);
+        const form = ref({ tel: '', pass: '' });
 
         const clientLink = computed(() => `${window.location.origin}/reserva?id=${bizId.value}`);
-        const totalSales = computed(() => citas.value.reduce((acc, c) => acc + Number(c.valor_cobrado || 0), 0));
 
-        onMounted(() => {
-          const p = new URLSearchParams(window.location.search);
-          if(p.has('id')) isReg.value = true; // Si Wompi manda un ID, habilitamos el registro
+        const salesToday = computed(() => {
+          const hoy = new Date().toISOString().split('T')[0];
+          return citas.value.filter(c => c.fecha_turno === hoy && c.estado === 'paid').reduce((acc, c) => acc + Number(c.valor_cobrado), 0);
         });
 
-        const fetchCitas = async (id) => {
-          const { data } = await sb.from('citas').select('*').eq('barberia_id', id).order('fecha_turno', { ascending: true }).order('hora_turno', { ascending: true });
+        const salesMonth = computed(() => {
+          const mes = new Date().toISOString().slice(0, 7);
+          return citas.value.filter(c => c.fecha_turno.startsWith(mes) && c.estado === 'paid').reduce((acc, c) => acc + Number(c.valor_cobrado), 0);
+        });
+
+        const citasHoy = computed(() => {
+          const hoy = new Date().toISOString().split('T')[0];
+          return citas.value.filter(c => c.fecha_turno === hoy).sort((a,b) => a.hora_turno.localeCompare(b.hora_turno));
+        });
+
+        const handleAuth = async () => {
+          const { data: x } = await sb.from('perfil_barberia').select('*').eq('celular', form.value.tel).single();
+          if(x && x.clave_acceso === form.value.pass) {
+            bizId.value = x.id; bizName.value = x.nombre_negocio; estaPausado.value = x.esta_pausado; auth.value = true; fetchTodo();
+          } else { alert("Error de acceso"); }
+        };
+
+        const fetchTodo = async () => {
+          const { data } = await sb.from('citas').select('*').eq('barberia_id', bizId.value);
           if(data) citas.value = data;
         };
 
-        const handleAuth = async () => {
-          loading.value = true;
-          if(isReg.value) {
-            const { data: n } = await sb.from('perfil_barberia').insert([{ nombre_negocio: form.value.name, celular: form.value.tel, clave_acceso: form.value.pass }]).select().single();
-            if(n) { bizId.value = n.id; bizName.value = n.nombre_negocio; auth.value = true; fetchCitas(n.id); }
-            else alert("Error: Este celular ya existe.");
-          } else {
-            const { data: x } = await sb.from('perfil_barberia').select('*').eq('celular', form.value.tel).single();
-            if(x && x.clave_acceso === form.value.pass) { bizId.value = x.id; bizName.value = x.nombre_negocio; auth.value = true; fetchCitas(x.id); }
-            else alert("Datos de acceso incorrectos.");
-          }
-          loading.value = false;
+        const togglePausa = async () => {
+          estaPausado.value = !estaPausado.value;
+          await sb.from('perfil_barberia').update({ esta_pausado: estaPausado.value }).eq('id', bizId.value);
         };
 
-        const addManual = async () => {
-          if(!manual.value.cli || !manual.value.date || !manual.value.time) return;
-          await sb.from('citas').insert([{ barberia_id: bizId.value, nombre_cliente: manual.value.cli, fecha_turno: manual.value.date, hora_turno: manual.value.time, estado: 'pending' }]);
-          manual.value = { cli: '', date: '', time: '' };
-          showManual.value = false;
-          fetchCitas(bizId.value);
+        const cobrar = async (id) => {
+          const val = prompt('Valor del servicio cobrado:');
+          if(val) {
+            await sb.from('citas').update({ valor_cobrado: Number(val), estado: 'paid' }).eq('id', id);
+            fetchTodo();
+          }
+        };
+
+        const eliminar = async (id) => {
+          if(confirm('¿Eliminar cita?')) { await sb.from('citas').delete().eq('id', id); fetchTodo(); }
         };
 
         const copyLink = () => {
@@ -148,24 +140,7 @@
           setTimeout(() => copied.value = false, 2000);
         };
 
-        const cobrar = async (id) => {
-          const v = prompt('¿Cuánto cobraste por este servicio?');
-          if(v) {
-            await sb.from('citas').update({ valor_cobrado: Number(v), estado: 'paid' }).eq('id', id);
-            fetchCitas(bizId.value);
-          }
-        };
-
-        const eliminar = async (id) => {
-          if(confirm('¿Eliminar cita de la agenda?')) {
-            await sb.from('citas').delete().eq('id', id);
-            fetchCitas(bizId.value);
-          }
-        };
-
-        const logout = () => location.reload();
-
-        return { auth, isReg, showRegToggle, form, loading, bizName, citas, clientLink, totalSales, showManual, manual, handleAuth, copyLink, copied, addManual, eliminar, cobrar, logout };
+        return { auth, bizName, estaPausado, salesToday, salesMonth, citasHoy, clientLink, copied, form, handleAuth, togglePausa, cobrar, eliminar, copyLink };
       }
     }).mount('#app');
   </script>
