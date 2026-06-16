@@ -7,95 +7,131 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    [v-cloak] { display: none; }
+    .bg-invitation { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen antialiased">
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased font-sans">
   <div id="app" v-cloak>
+    
     <!-- LOGIN -->
     <div v-if="!auth" class="max-w-md mx-auto py-20 px-6">
-      <div class="bg-slate-900 p-8 rounded-3xl border border-slate-800 space-y-6">
-        <h2 class="text-2xl font-bold text-center">Acceso Administrador</h2>
+      <div class="bg-slate-900/50 p-8 rounded-[2.5rem] border border-slate-800 space-y-6 shadow-2xl backdrop-blur-xl">
+        <h1 class="text-3xl font-black italic uppercase tracking-tighter text-center leading-none">Acceso<br><span class="text-purple-500">ZapiCitas</span></h1>
         <form @submit.prevent="handleAuth" class="space-y-4">
-          <input v-model="form.tel" type="tel" placeholder="Celular" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none">
-          <input v-model="form.pass" type="password" placeholder="Contraseña" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none">
-          <button type="submit" class="w-full py-4 bg-purple-600 rounded-xl font-bold">ENTRAR</button>
+          <input v-model="form.tel" type="tel" placeholder="Tu celular" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none focus:border-purple-600 transition-all">
+          <input v-model="form.pass" type="password" placeholder="Tu contraseña" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none focus:border-purple-600 transition-all">
+          <button type="submit" class="w-full py-4 bg-purple-600 rounded-2xl font-black italic uppercase tracking-widest shadow-lg shadow-purple-600/20">Entrar</button>
         </form>
       </div>
     </div>
 
     <!-- PANEL PRINCIPAL -->
     <div v-else class="max-w-md mx-auto p-4 space-y-6 animate-in fade-in duration-500">
-      <header class="bg-slate-900 p-5 rounded-3xl border border-slate-800 flex justify-between items-center shadow-xl">
+      <header class="bg-slate-900/80 p-6 rounded-[2rem] border border-slate-800 flex justify-between items-center shadow-xl backdrop-blur-md">
         <div>
-          <h2 class="font-bold text-white leading-tight">{{ bizName }}</h2>
-          <button @click="showConfig = !showConfig" class="text-[9px] text-purple-400 font-bold uppercase tracking-widest mt-1">⚙️ Ajustes de Agenda</button>
+          <h2 class="text-xl font-black italic uppercase tracking-tighter leading-none text-white">{{ bizName }}</h2>
+          <button @click="modals.config = true" class="text-[9px] text-purple-400 font-bold uppercase tracking-[0.2em] mt-2 block">⚙️ Ajustes de Agenda</button>
         </div>
-        <button @click="togglePausa" :class="estaPausado ? 'bg-rose-600' : 'bg-emerald-600'" class="px-4 py-2 rounded-xl text-[9px] font-black uppercase">
+        <button @click="togglePausa" :class="estaPausado ? 'bg-rose-600' : 'bg-emerald-600'" class="px-4 py-2 rounded-xl text-[9px] font-black uppercase border border-white/10">
           {{ estaPausado ? 'Pausado' : 'Activo' }}
         </button>
       </header>
 
-      <!-- CONFIGURACION DE HORARIOS -->
-      <div v-if="showConfig" class="bg-slate-900 p-6 rounded-3xl border border-purple-500/30 space-y-4 animate-in zoom-in duration-300">
-        <h3 class="text-xs font-bold uppercase text-purple-300">Configuración de Agenda</h3>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="space-y-1">
-            <label class="text-[9px] text-slate-500 uppercase font-bold">Abre a las:</label>
-            <input v-model="config.inicio" type="time" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs">
-          </div>
-          <div class="space-y-1">
-            <label class="text-[9px] text-slate-500 uppercase font-bold">Cierra a las:</label>
-            <input v-model="config.fin" type="time" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs">
-          </div>
-        </div>
-        <div class="space-y-1">
-          <label class="text-[9px] text-slate-500 uppercase font-bold">Duración de cada cita:</label>
-          <select v-model="config.duracion" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
-            <option :value="30">30 Minutos</option>
-            <option :value="45">45 Minutos</option>
-            <option :value="60">1 Hora (Recomendado)</option>
-            <option :value="90">1 Hora y 30 Minutos</option>
-          </select>
-        </div>
-        <button @click="saveConfig" class="w-full py-3 bg-purple-600 rounded-xl text-xs font-bold">GUARDAR CAMBIOS</button>
-      </div>
-
-      <!-- VENTAS -->
+      <!-- VENTAS DASHBOARD -->
       <div class="grid grid-cols-2 gap-4">
-        <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800">
-          <span class="text-[9px] text-slate-500 font-bold uppercase block mb-1">Hoy</span>
-          <span class="text-xl font-black">${{ salesToday.toLocaleString() }}</span>
+        <div class="bg-slate-900 p-5 rounded-[2rem] border border-slate-800">
+          <span class="text-[9px] text-slate-500 font-black uppercase tracking-widest block mb-1">Hoy</span>
+          <span class="text-2xl font-black italic tracking-tighter">${{ salesToday.toLocaleString() }}</span>
         </div>
-        <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800">
-          <span class="text-[9px] text-slate-500 font-bold uppercase block mb-1">Este Mes</span>
-          <span class="text-xl font-black text-emerald-400">${{ salesMonth.toLocaleString() }}</span>
+        <div class="bg-slate-900 p-5 rounded-[2rem] border border-slate-800">
+          <span class="text-[9px] text-slate-500 font-black uppercase tracking-widest block mb-1">Mes</span>
+          <span class="text-2xl font-black italic tracking-tighter text-emerald-400">${{ salesMonth.toLocaleString() }}</span>
         </div>
       </div>
 
-      <!-- LISTA DE CITAS -->
+      <!-- CITAS -->
       <div class="space-y-3">
-        <div class="flex justify-between items-center px-1">
-          <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Citas de Hoy</h3>
-          <span class="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        </div>
-        <div v-if="citasHoy.length === 0" class="py-10 text-center text-xs text-slate-600 bg-slate-900/20 rounded-3xl border border-dashed border-slate-800 italic">No hay citas registradas para hoy.</div>
-        <div v-for="c in citasHoy" :key="c.id" class="bg-slate-900 p-5 rounded-3xl border border-slate-800 flex justify-between items-center shadow-md">
+        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] px-2">Citas de hoy</h3>
+        <div v-if="citasHoy.length === 0" class="py-20 text-center text-[10px] text-slate-600 bg-slate-900/20 rounded-[2.5rem] border border-dashed border-slate-800 uppercase font-bold tracking-widest italic">Agenda vacía</div>
+        
+        <div v-for="c in citasHoy" :key="c.id" class="bg-slate-900 p-5 rounded-[2rem] border border-slate-800 flex justify-between items-center shadow-md">
           <div>
-            <p class="text-sm font-bold text-white leading-none">{{ c.nombre_cliente }}</p>
-            <p class="text-[10px] text-purple-400 font-bold mt-2 uppercase tracking-tighter">{{ c.hora_turno }}</p>
+            <p class="text-sm font-black italic uppercase tracking-tight text-white">{{ c.nombre_cliente }}</p>
+            <p class="text-[10px] text-purple-400 font-bold mt-1 tracking-widest">{{ c.hora_turno }}</p>
           </div>
           <div class="flex gap-2">
-            <button v-if="!c.valor_cobrado" @click="cobrar(c.id)" class="bg-emerald-600 text-[9px] px-3 py-2 rounded-xl font-bold uppercase">Cobrar</button>
-            <span v-else class="text-emerald-400 font-black text-xs">${{ c.valor_cobrado.toLocaleString() }}</span>
-            <button @click="eliminar(c.id)" class="text-slate-600 px-1 text-lg">✕</button>
+            <button v-if="!c.valor_cobrado" @click="openCobrar(c.id)" class="bg-purple-600 text-[9px] px-4 py-2 rounded-xl font-black uppercase italic tracking-tighter">Cobrar</button>
+            <span v-else class="text-emerald-400 font-black italic text-sm pr-2">${{ c.valor_cobrado.toLocaleString() }}</span>
+            <button @click="openConfirmDelete(c.id)" class="text-slate-700 px-1 text-xl hover:text-rose-500 transition-colors">✕</button>
           </div>
         </div>
       </div>
       
-      <button @click="logout" class="w-full py-4 text-[9px] font-bold text-slate-700 uppercase tracking-[0.3em]">Cerrar Sesión</button>
+      <button @click="logout" class="w-full py-10 text-[9px] font-black text-slate-800 uppercase tracking-[0.5em]">Cerrar Sesión</button>
+
+      <!-- MODALES PERSONALIZADOS (ELEGANTES) -->
+      
+      <!-- Modal Configuración -->
+      <div v-if="modals.config" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-sm space-y-6 shadow-2xl animate-in zoom-in duration-300">
+          <h3 class="text-xl font-black italic uppercase text-center text-purple-400">Ajustes de Agenda</h3>
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="text-[9px] font-bold text-slate-500 uppercase">Abre</label><input v-model="config.inicio" type="time" class="w-full p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs"></div>
+              <div><label class="text-[9px] font-bold text-slate-500 uppercase">Cierra</label><input v-model="config.fin" type="time" class="w-full p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs"></div>
+            </div>
+            <div>
+              <label class="text-[9px] font-bold text-slate-500 uppercase">Duración Cita (Minutos)</label>
+              <input v-model.number="config.duracion" type="number" step="5" min="5" max="240" class="w-full p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-white outline-none focus:border-purple-600">
+              <p class="text-[8px] text-slate-600 mt-1 italic">Puedes poner cualquier tiempo (ej: 15, 120, 150 min)</p>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2 pt-2">
+            <button @click="saveConfig" class="w-full py-4 bg-purple-600 rounded-2xl font-black italic uppercase text-xs tracking-widest">Guardar</button>
+            <button @click="modals.config = false" class="w-full py-2 text-[9px] font-bold text-slate-600 uppercase">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Cobrar (Evita ceros de más) -->
+      <div v-if="modals.cobrar" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md">
+        <div class="bg-slate-900 border border-emerald-500/30 p-8 rounded-[2.5rem] w-full max-w-sm space-y-6 shadow-2xl animate-in zoom-in duration-300">
+          <h3 class="text-xl font-black italic uppercase text-center text-emerald-400">Registrar Cobro</h3>
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold text-slate-500 uppercase tracking-widest text-center block">Monto total recibido</label>
+            <input v-model.number="cobroInput" type="number" placeholder="Ej: 13000" class="w-full p-5 bg-slate-950 rounded-2xl border border-slate-800 text-2xl font-black italic text-center text-white outline-none focus:border-emerald-500">
+            <p class="text-center text-[10px] text-emerald-500/50 font-bold mt-2">Confirma el valor antes de guardar</p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button @click="confirmCobrar" class="w-full py-4 bg-emerald-600 rounded-2xl font-black italic uppercase text-xs tracking-widest shadow-lg shadow-emerald-600/20">Finalizar</button>
+            <button @click="modals.cobrar = false" class="w-full py-2 text-[9px] font-bold text-slate-600 uppercase">Cerrar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Confirmar Eliminar -->
+      <div v-if="modals.delete" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md">
+        <div class="bg-slate-900 border border-rose-500/30 p-8 rounded-[2.5rem] w-full max-w-sm space-y-6 shadow-2xl animate-in zoom-in duration-300">
+          <h3 class="text-lg font-black italic uppercase text-center text-rose-500">¿Eliminar Cita?</h3>
+          <p class="text-xs text-slate-400 text-center leading-relaxed">Esta acción quitará al cliente de la agenda permanentemente.</p>
+          <div class="flex flex-col gap-2">
+            <button @click="confirmDelete" class="w-full py-4 bg-rose-600 rounded-2xl font-black italic uppercase text-xs tracking-widest shadow-lg shadow-rose-600/20">Confirmar</button>
+            <button @click="modals.delete = false" class="w-full py-2 text-[9px] font-bold text-slate-600 uppercase">Volver</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notificación Flotante (Toast elegante) -->
+      <div v-if="toast.show" class="fixed top-10 left-0 right-0 flex justify-center z-[100] animate-in slide-in-from-top duration-500">
+        <div class="bg-white text-slate-950 px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border-t-4 border-purple-600">
+          <span class="text-xs font-black italic uppercase tracking-tighter">{{ toast.msg }}</span>
+        </div>
+      </div>
+
     </div>
   </div>
-
-  <style>[v-cloak] { display: none; }</style>
 
   <script>
     const { createApp, ref, computed, onMounted } = Vue;
@@ -108,9 +144,39 @@
         const bizName = ref('');
         const estaPausado = ref(false);
         const citas = ref([]);
-        const showConfig = ref(false);
         const form = ref({ tel: '', pass: '' });
         const config = ref({ inicio: '08:00', fin: '18:00', duracion: 60 });
+        
+        // Estados de Modales
+        const modals = ref({ config: false, cobrar: false, delete: false });
+        const cobroInput = ref(null);
+        const selectedId = ref(null);
+        const toast = ref({ show: false, msg: '' });
+
+        const showToast = (msg) => {
+          toast.value = { show: true, msg };
+          setTimeout(() => toast.value.show = false, 3000);
+        };
+
+        const handleAuth = async () => {
+          const { data: x } = await sb.from('perfil_barberia').select('*').eq('celular', form.value.tel).single();
+          if(x && x.clave_acceso === form.value.pass) {
+            bizId.value = x.id; bizName.value = x.nombre_negocio; estaPausado.value = x.esta_pausado;
+            config.value = { inicio: x.hora_inicio, fin: x.hora_fin, duracion: x.duracion_minutos };
+            auth.value = true;
+            fetchTodo();
+            listenRealtime();
+          } else { showToast("Acceso Incorrecto"); }
+        };
+
+        const listenRealtime = () => {
+          sb.channel('db-admin').on('postgres_changes', { event: '*', schema: 'public', table: 'citas', filter: `barberia_id=eq.${bizId.value}` }, () => fetchTodo()).subscribe();
+        };
+
+        const fetchTodo = async () => {
+          const { data } = await sb.from('citas').select('*').eq('barberia_id', bizId.value);
+          if(data) citas.value = data;
+        };
 
         const salesToday = computed(() => {
           const hoy = new Date().toISOString().split('T')[0];
@@ -127,37 +193,14 @@
           return citas.value.filter(c => c.fecha_turno === hoy).sort((a,b) => a.hora_turno.localeCompare(b.hora_turno));
         });
 
-        const handleAuth = async () => {
-          const { data: x } = await sb.from('perfil_barberia').select('*').eq('celular', form.value.tel).single();
-          if(x && x.clave_acceso === form.value.pass) {
-            bizId.value = x.id; bizName.value = x.nombre_negocio; estaPausado.value = x.esta_pausado;
-            config.value = { inicio: x.hora_inicio, fin: x.hora_fin, duracion: x.duracion_minutos };
-            auth.value = true;
-            fetchTodo();
-            listenRealtime();
-          } else { alert("Acceso denegado."); }
-        };
-
-        const listenRealtime = () => {
-          sb.channel('custom-all-channel')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'citas', filter: `barberia_id=eq.${bizId.value}` }, () => {
-              fetchTodo();
-            }).subscribe();
-        };
-
-        const fetchTodo = async () => {
-          const { data } = await sb.from('citas').select('*').eq('barberia_id', bizId.value);
-          if(data) citas.value = data;
-        };
-
         const saveConfig = async () => {
           await sb.from('perfil_barberia').update({
             hora_inicio: config.value.inicio,
             hora_fin: config.value.fin,
             duracion_minutos: config.value.duracion
           }).eq('id', bizId.value);
-          showConfig.value = false;
-          alert("Agenda actualizada.");
+          modals.value.config = false;
+          showToast("Agenda Actualizada");
         };
 
         const togglePausa = async () => {
@@ -165,21 +208,26 @@
           await sb.from('perfil_barberia').update({ esta_pausado: estaPausado.value }).eq('id', bizId.value);
         };
 
-        const cobrar = async (id) => {
-          const val = prompt('Monto cobrado:');
-          if(val) {
-            await sb.from('citas').update({ valor_cobrado: Number(val), estado: 'paid' }).eq('id', id);
-            fetchTodo();
-          }
+        const openCobrar = (id) => { selectedId.value = id; cobroInput.value = null; modals.value.cobrar = true; };
+        const confirmCobrar = async () => {
+          if(!cobroInput.value) return;
+          await sb.from('citas').update({ valor_cobrado: Number(cobroInput.value), estado: 'paid' }).eq('id', selectedId.value);
+          modals.value.cobrar = false;
+          fetchTodo();
+          showToast("Venta Registrada");
         };
 
-        const eliminar = async (id) => {
-          if(confirm('¿Eliminar cita?')) { await sb.from('citas').delete().eq('id', id); fetchTodo(); }
+        const openConfirmDelete = (id) => { selectedId.value = id; modals.value.delete = true; };
+        const confirmDelete = async () => {
+          await sb.from('citas').delete().eq('id', selectedId.value);
+          modals.value.delete = false;
+          fetchTodo();
+          showToast("Cita Eliminada");
         };
 
         const logout = () => location.reload();
 
-        return { auth, bizName, estaPausado, salesToday, salesMonth, citasHoy, form, showConfig, config, handleAuth, togglePausa, cobrar, eliminar, logout, saveConfig };
+        return { auth, bizName, estaPausado, salesToday, salesMonth, citasHoy, form, config, modals, cobroInput, toast, handleAuth, saveConfig, togglePausa, openCobrar, confirmCobrar, openConfirmDelete, confirmDelete, logout };
       }
     }).mount('#app');
   </script>
