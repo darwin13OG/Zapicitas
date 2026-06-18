@@ -27,12 +27,12 @@
 
     <!-- LOGIN / REGISTRO -->
     <div v-else-if="!auth" class="max-w-md mx-auto py-20 px-6">
-      <div class="bg-slate-900/50 p-8 rounded-[2.5rem] border border-slate-800 space-y-6 shadow-2xl backdrop-blur-xl">
-        <h1 class="text-3xl font-black tracking-tighter text-center">Zapi<span class="text-purple-500">Citas</span></h1>
-        <form @submit.prevent="handleAuth" class="space-y-4 text-xs font-bold">
+      <div class="bg-slate-900/50 p-8 rounded-[2.5rem] border border-slate-800 space-y-6 shadow-2xl backdrop-blur-xl text-xs font-bold">
+        <h1 class="text-3xl font-black tracking-tighter text-center italic">Zapi<span class="text-purple-500">Citas</span></h1>
+        <form @submit.prevent="handleAuth" class="space-y-4">
           <input v-if="isReg" v-model="form.name" type="text" placeholder="Nombre de tu Negocio" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none">
-          <input v-model="form.tel" type="tel" placeholder="Tu celular" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white">
-          <input v-model="form.pass" type="password" placeholder="Tu contraseña" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white">
+          <input v-model="form.tel" type="tel" placeholder="Tu celular" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none">
+          <input v-model="form.pass" type="password" placeholder="Tu contraseña" required class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none">
           <button type="submit" class="w-full py-4 bg-purple-600 rounded-2xl font-black tracking-widest shadow-lg">{{ isReg ? 'Crear Negocio' : 'Entrar' }}</button>
         </form>
       </div>
@@ -58,8 +58,20 @@
         <span class="text-[10px] font-black text-slate-500 tracking-[0.2em] block">Link para tus Clientes</span>
         <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-[10px] font-mono truncate text-purple-400/80 mb-2">{{ clientLink }}</div>
         <button @click="copyLink" class="w-full py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl text-[10px] font-black tracking-widest transition-all border border-slate-700 shadow-lg">
-          {{ copied ? "¡COPIADO CON ÉXITO!" : "Copiar Enlace para Whatsaap" }}
+          {{ copied ? "¡COPIADO CON ÉXITO!" : "Copiar Enlace para WhatsApp" }}
         </button>
+      </div>
+
+      <!-- DASHBOARD DE TURNOS FUTUROS -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-slate-900/50 p-4 rounded-[2rem] border border-slate-800 text-center">
+          <span class="text-[8px] text-slate-500 font-black block">Turnos Mañana</span>
+          <span class="text-xl font-black text-white">{{ countMañana }}</span>
+        </div>
+        <div class="bg-slate-900/50 p-4 rounded-[2rem] border border-slate-800 text-center">
+          <span class="text-[8px] text-slate-500 font-black block">Esta Semana</span>
+          <span class="text-xl font-black text-white">{{ countSemana }}</span>
+        </div>
       </div>
 
       <!-- VENTAS -->
@@ -73,6 +85,8 @@
           <span class="text-2xl font-black text-emerald-400">${{ salesMonth.toLocaleString() }}</span>
         </div>
       </div>
+
+      <button @click="modals.confirmCierre = true" class="w-full py-4 bg-zinc-900 border border-white/5 rounded-2xl text-[9px] font-black text-zinc-500 tracking-[0.2em] shadow-lg">Reiniciar Caja y Limpiar Pagados</button>
 
       <!-- AGENDAR CITA MANUAL -->
       <div class="bg-slate-900 border border-purple-500/30 p-6 rounded-[2.5rem] shadow-xl space-y-4">
@@ -89,13 +103,13 @@
               <button v-for="h in availableSlotsManual" :key="h" @click="manualForm.time = h" 
                 :class="manualForm.time === h ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500'"
                 class="py-2 border rounded-lg text-[9px] font-black transition-all">
-                {{ h }}
+                {{ formatAMPM(h) }}
               </button>
             </div>
           </div>
-          <div v-if="manualForm.time" class="space-y-4 animate-in fade-in">
-            <label class="text-[9px] font-black text-slate-500 tracking-widest">3. Nombre</label>
-            <input v-model="manualForm.name" type="text" placeholder="Ej: Juan Pérez" class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white text-xs font-black">
+          <div v-if="manualForm.time" class="space-y-4 animate-in fade-in text-left">
+            <label class="text-[9px] font-black text-slate-500 tracking-widest px-2">3. Nombre del Cliente</label>
+            <input v-model="manualForm.name" type="text" placeholder="Ej: Juan Pérez" class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white text-xs font-black outline-none">
             <button @click="saveManual" class="w-full py-4 bg-purple-600 rounded-2xl font-black text-[10px] tracking-widest shadow-lg">Confirmar Cita</button>
           </div>
         </div>
@@ -107,8 +121,8 @@
         <div v-if="citasHoy.length === 0" class="py-16 text-center text-[11px] text-slate-700 font-bold tracking-widest bg-slate-900/20 rounded-[2.5rem] border border-dashed border-slate-800">No hay turnos para hoy.</div>
         <div v-for="c in citasHoy" :key="c.id" class="bg-slate-900 p-5 rounded-[2rem] border border-slate-800 flex justify-between items-center shadow-md animate-in slide-in-from-bottom">
           <div>
-            <p class="text-sm font-black text-white tracking-tight leading-none">{{ c.nombre_cliente }}</p>
-            <p class="text-[10px] text-purple-400 font-bold mt-2 tracking-widest">{{ c.hora_turno }}</p>
+            <p class="text-sm font-black text-white tracking-tight leading-none text-left">{{ c.nombre_cliente }}</p>
+            <p class="text-[10px] text-purple-400 font-bold mt-2 tracking-widest text-left">{{ formatAMPM(c.hora_turno) }}</p>
           </div>
           <div class="flex gap-2">
             <button v-if="!c.valor_cobrado" @click="openCobrar(c.id)" class="bg-purple-600 text-[9px] px-4 py-2 rounded-xl font-black tracking-tighter shadow-lg">Cobrar</button>
@@ -118,22 +132,20 @@
         </div>
       </div>
       
-      <button @click="logout" class="w-full py-10 text-[9px] font-black text-slate-800 uppercase tracking-[0.5em] hover:text-slate-600 transition-all">Cerrar Sesión</button>
+      <button @click="modals.confirmLogout = true" class="w-full py-10 text-[9px] font-black text-slate-800 uppercase tracking-[0.5em] hover:text-slate-600 transition-all">Cerrar Sesión</button>
 
-      <!-- MODALES DE LUJO (REEMPLAZAN A GOOGLE) -->
+      <!-- MODALES DE LUJO (SIN GOOGLE) -->
       
-      <!-- Éxito / Info -->
       <div v-if="modals.success" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md">
-        <div class="bg-slate-900 border border-purple-500/30 p-10 rounded-[3rem] text-center space-y-6 shadow-2xl max-w-xs w-full animate-in zoom-in">
-          <div class="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner animate-bounce">✓</div>
+        <div class="bg-slate-900 border border-purple-500/30 p-10 rounded-[3rem] text-center space-y-6 shadow-2xl max-w-xs w-full pop-in">
+          <div class="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">✓</div>
           <p class="text-xs font-black tracking-widest text-white">{{ modalMsg }}</p>
           <button @click="modals.success = false" class="w-full py-4 bg-purple-600 rounded-2xl font-black text-xs">Aceptar</button>
         </div>
       </div>
 
-      <!-- Confirmar Borrado -->
       <div v-if="modals.confirmDelete" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md">
-        <div class="bg-slate-900 border border-rose-500/30 p-10 rounded-[3rem] text-center space-y-6 shadow-2xl max-w-xs w-full animate-in zoom-in">
+        <div class="bg-slate-900 border border-rose-500/30 p-10 rounded-[3rem] text-center space-y-6 shadow-2xl max-w-xs w-full pop-in">
           <div class="w-16 h-16 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto text-2xl">✕</div>
           <p class="text-xs font-black tracking-widest text-white">¿Borrar cita permanentemente?</p>
           <div class="flex flex-col gap-2">
@@ -143,12 +155,36 @@
         </div>
       </div>
 
-      <!-- Configuración -->
+      <!-- MODAL CONFIRMAR CIERRE DE CAJA -->
+      <div v-if="modals.confirmCierre" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md text-center">
+        <div class="glass bg-slate-900 border border-orange-500/30 p-10 rounded-[3.5rem] space-y-6 max-w-xs w-full pop-in shadow-2xl">
+            <div class="text-5xl">🗓️</div>
+            <h2 class="text-xl font-black text-white uppercase italic leading-tight">Cerrar Semana</h2>
+            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Se borrarán las citas pagadas para reiniciar ingresos. Los turnos pendientes no se tocan.</p>
+            <div class="flex flex-col gap-2">
+                <button @click="ejecutarCierreCaja" class="w-full py-4 bg-purple-600 rounded-2xl font-black text-xs uppercase shadow-xl">Confirmar Reinicio</button>
+                <button @click="modals.confirmCierre = false" class="w-full py-2 text-[9px] font-bold text-zinc-700 uppercase">Cancelar</button>
+            </div>
+        </div>
+      </div>
+
+      <!-- MODAL CONFIRMAR LOGOUT -->
+      <div v-if="modals.confirmLogout" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md text-center text-xs">
+        <div class="bg-slate-900 border border-slate-800 p-10 rounded-[3rem] space-y-6 max-w-xs w-full pop-in shadow-2xl">
+            <h3 class="text-xl font-black text-white uppercase italic tracking-tighter">Cerrar Sesión</h3>
+            <p class="text-zinc-500 font-bold uppercase tracking-widest">¿Deseas salir del panel?</p>
+            <div class="flex flex-col gap-2">
+                <button @click="logout" class="w-full py-4 bg-rose-600 rounded-2xl font-black text-xs uppercase shadow-lg">Sí, Salir</button>
+                <button @click="modals.confirmLogout = false" class="text-[9px] font-bold text-zinc-700 uppercase">Volver</button>
+            </div>
+        </div>
+      </div>
+
       <div v-if="modals.config" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md">
         <div class="bg-slate-900 border border-slate-800 p-8 rounded-[3rem] w-full max-w-sm space-y-6 shadow-2xl animate-in zoom-in">
           <h3 class="text-xl font-black text-center text-purple-400">Ajustes Agenda</h3>
           <div class="space-y-4 text-left">
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-2 gap-3 text-xs">
               <div><label class="text-[9px] font-black text-slate-500 tracking-widest">Abre</label><input v-model="config.inicio" type="time" class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none"></div>
               <div><label class="text-[9px] font-black text-slate-500 tracking-widest">Cierra</label><input v-model="config.fin" type="time" class="w-full p-4 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none"></div>
             </div>
@@ -159,13 +195,12 @@
         </div>
       </div>
 
-      <!-- Cobrar -->
       <div v-if="modals.cobrar" class="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md">
         <div class="bg-slate-900 border border-emerald-500/30 p-10 rounded-[3rem] w-full max-w-sm space-y-6 shadow-2xl animate-in zoom-in">
-          <h3 class="text-xl font-black text-center text-emerald-400 tracking-tighter leading-none">Registrar Cobro</h3>
-          <input v-model.number="cobroInput" type="number" placeholder="Ej: 15000" class="w-full p-5 bg-slate-950 rounded-2xl border border-slate-800 text-3xl font-black text-center text-white outline-none focus:border-emerald-500">
-          <button @click="confirmCobrar" class="w-full py-4 bg-emerald-600 rounded-2xl font-black text-xs tracking-widest shadow-lg">Confirmar</button>
-          <button @click="modals.cobrar = false" class="w-full text-[9px] font-bold text-slate-600 uppercase text-center">Cancelar</button>
+          <h3 class="text-xl font-black text-center text-emerald-400 tracking-tighter leading-none italic">Registrar Cobro</h3>
+          <input v-model.number="cobroInput" type="number" placeholder="Ej: 15000" class="w-full p-5 bg-slate-950 rounded-2xl border border-slate-800 text-3xl font-black text-center text-white outline-none focus:border-emerald-500 italic">
+          <button @click="confirmCobrar" class="w-full py-4 bg-emerald-600 rounded-2xl font-black text-xs tracking-widest shadow-lg uppercase">Confirmar Pago</button>
+          <button @click="modals.cobrar = false" class="w-full text-[9px] font-bold text-slate-600 uppercase text-center tracking-widest">Cancelar</button>
         </div>
       </div>
 
@@ -184,11 +219,13 @@
         const form = ref({ name: '', tel: '', pass: '' });
         const manualForm = ref({ name: '', date: '', time: '' });
         const config = ref({ inicio: '08:00', fin: '18:00', duracion: 60 });
-        const modals = ref({ config: false, cobrar: false, manual: false, success: false, confirmDelete: false });
+        const modals = ref({ config: false, cobrar: false, manual: false, success: false, confirmDelete: false, confirmLogout: false, confirmCierre: false });
         const modalMsg = ref(''); const cobroInput = ref(null); const selectedId = ref(null);
 
         const showM = (msg) => { modalMsg.value = msg; modals.value.success = true; };
         const clientLink = computed(() => `${window.location.origin}/reserva?id=${bizId.value}`);
+
+        const formatAMPM = (h) => { if(!h) return ''; let [hh, mm] = h.split(':'); hh = parseInt(hh); const ampm = hh >= 12 ? 'PM' : 'AM'; hh = hh % 12 || 12; return `${hh}:${mm} ${ampm}`; };
 
         const availableSlotsManual = computed(() => {
           const slots = []; let current = new Date(`2024-01-01T${config.value.inicio}`); const end = new Date(`2024-01-01T${config.value.fin}`);
@@ -232,6 +269,10 @@
         const togglePausa = async () => { estaPausado.value = !estaPausado.value; await sb.from('perfil_barberia').update({ esta_pausado: estaPausado.value }).eq('id', bizId.value); showM(estaPausado.value ? "Sistema Pausado" : "Sistema Activo"); };
         const salesToday = computed(() => { const hoy = new Date().toISOString().split('T')[0]; return citas.value.filter(c => c.fecha_turno === hoy && c.estado === 'paid').reduce((acc, c) => acc + Number(c.valor_cobrado), 0); });
         const salesMonth = computed(() => { const mes = new Date().toISOString().slice(0, 7); return citas.value.filter(c => c.fecha_turno.startsWith(mes) && c.estado === 'paid').reduce((acc, c) => acc + Number(c.valor_cobrado), 0); });
+        
+        const countMañana = computed(() => { const d = new Date(); d.setDate(d.getDate() + 1); const m = d.toISOString().split('T')[0]; return citas.value.filter(c => c.fecha_turno === m).length; });
+        const countSemana = computed(() => { const d = new Date(); d.setDate(d.getDate() + 7); const s = d.toISOString().split('T')[0]; const h = new Date().toISOString().split('T')[0]; return citas.value.filter(c => c.fecha_turno >= h && c.fecha_turno <= s).length; });
+
         const citasHoy = computed(() => { const hoy = new Date().toISOString().split('T')[0]; return citas.value.filter(c => c.fecha_turno === hoy).sort((a,b) => a.hora_turno.localeCompare(b.hora_turno)); });
         
         const openCobrar = (id) => { selectedId.value = id; modals.value.cobrar = true; };
@@ -240,11 +281,13 @@
         const openConfirmDelete = (id) => { selectedId.value = id; modals.value.confirmDelete = true; };
         const confirmDelete = async () => { await sb.from('citas').delete().eq('id', selectedId.value); modals.value.confirmDelete = false; fetchTodo(); showM("Turno eliminado"); };
         
+        const ejecutarCierreCaja = async () => { await sb.from('citas').delete().eq('barberia_id', bizId.value).eq('estado', 'paid'); modals.value.confirmCierre = false; fetchTodo(); showM("Caja Reiniciada"); };
+
         const copyLink = () => { navigator.clipboard.writeText(clientLink.value); copied.value = true; setTimeout(() => copied.value = false, 2000); };
         const logout = () => { localStorage.removeItem('zapicitas_id'); location.reload(); };
 
         onMounted(async () => { const sid = localStorage.getItem('zapicitas_id'); if (sid) { const { data } = await sb.from('perfil_barberia').select('*').eq('id', sid).single(); if (data) loginSuccess(data); } });
-        return { auth, isReg, bizName, estaPausado, vencido, fechaExp, salesToday, salesMonth, citasHoy, clientLink, form, manualForm, config, modals, cobroInput, handleAuth, togglePausa, saveConfig, saveManual, availableSlotsManual, fetchOcupadosManual, openCobrar, confirmCobrar, openConfirmDelete, confirmDelete, copyLink, logout, copied, modalMsg };
+        return { auth, isReg, bizName, estaPausado, vencido, fechaExp, salesToday, salesMonth, countMañana, countSemana, citasHoy, clientLink, form, manualForm, config, modals, cobroInput, handleAuth, togglePausa, saveConfig, saveManual, availableSlotsManual, fetchOcupadosManual, openCobrar, confirmCobrar, openConfirmDelete, confirmDelete, copyLink, logout, copied, modalMsg, formatAMPM, ejecutarCierreCaja };
       }
     }).mount('#app');
   </script>
