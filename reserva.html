@@ -9,7 +9,7 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>[v-cloak] { display: none; }</style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen antialiased">
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased font-sans uppercase italic">
   <div id="app" class="max-w-md mx-auto px-6 py-10 space-y-8" v-cloak>
     
     <header class="text-center space-y-4">
@@ -34,16 +34,17 @@
 
       <div v-if="form.date" class="space-y-3">
         <label class="text-[9px] font-black italic text-slate-500 uppercase tracking-widest px-1">2. ¿A qué hora?</label>
-        <div class="grid grid-cols-3 gap-2">
+        <div v-if="availableSlots.length > 0" class="grid grid-cols-3 gap-2">
           <button type="button" v-for="h in availableSlots" :key="h" @click="form.time = h" 
             :class="form.time === h ? 'bg-purple-600 border-purple-500 text-white scale-95' : 'bg-slate-900 border-slate-800 text-slate-400'"
-            class="py-3 border rounded-xl text-[10px] font-black italic transition-all">
-            {{ h }}
+            class="py-3 border rounded-xl text-[10px] font-black italic transition-all leading-tight">
+            {{ formatAMPM(h) }}
           </button>
         </div>
+        <p v-else class="text-[10px] text-rose-500 font-bold p-4 text-center">No hay más turnos disponibles para este día.</p>
       </div>
 
-      <div v-if="form.time" class="space-y-3 pt-4 border-t border-slate-900 animate-in zoom-in duration-500">
+      <div v-if="form.time" class="space-y-3 pt-4 border-t border-slate-900 animate-in zoom-in duration-500 text-left">
         <input v-model="form.cli" type="text" placeholder="Tu nombre" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
         <input v-model="form.tel" type="tel" placeholder="Tu celular" class="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
         <button @click="save" class="w-full py-5 bg-purple-600 rounded-3xl font-black italic text-sm tracking-widest uppercase shadow-xl shadow-purple-600/30">Agendar Turno</button>
@@ -53,24 +54,43 @@
     <!-- PESTAÑA: CONSULTA -->
     <div v-if="tab === 'consulta'" class="space-y-6">
       <div class="flex gap-2">
-        <input v-model="searchTel" type="tel" placeholder="Celular" class="flex-1 p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
+        <input v-model="searchTel" type="tel" placeholder="Tu Celular" class="flex-1 p-4 bg-slate-900 border border-slate-800 rounded-2xl text-white outline-none">
         <button @click="consultar" class="bg-purple-600 px-6 rounded-2xl font-bold">🔍</button>
       </div>
-      <div v-for="c in misCitas" :key="c.id" class="bg-slate-900 p-6 rounded-[2rem] border border-slate-800 space-y-4 shadow-xl">
+
+      <div v-if="searched && misCitas.length === 0" class="text-center py-10 space-y-4">
+        <p class="text-rose-500 font-black text-xs">Cita no encontrada</p>
+        <a :href="'https://wa.me/57' + bizTel" target="_blank" class="inline-block py-3 px-6 bg-emerald-600 text-white rounded-xl text-[10px] font-black tracking-widest uppercase">Contactar Negocio</a>
+      </div>
+
+      <div v-for="c in misCitas" :key="c.id" class="bg-slate-900 p-6 rounded-[2rem] border border-slate-800 space-y-4 shadow-xl text-left">
         <div class="flex justify-between items-start">
-          <p class="font-black italic text-white uppercase">{{ c.hora_turno }}<br><span class="text-[9px] text-slate-500">{{ c.fecha_turno }}</span></p>
+          <p class="font-black italic text-white uppercase">{{ formatAMPM(c.hora_turno) }}<br><span class="text-[9px] text-slate-500 italic">{{ c.fecha_turno }}</span></p>
           <span :class="c.estado === 'paid' ? 'text-emerald-400' : 'text-amber-400'" class="text-[9px] font-black uppercase italic tracking-widest">{{ c.estado === 'paid' ? 'Confirmado' : 'Pendiente' }}</span>
         </div>
-        <button @click="cancelar(c.id)" class="w-full py-3 bg-slate-950 text-rose-500 rounded-xl text-[10px] font-black italic border border-rose-900/20 uppercase">Cancelar Turno</button>
+        <button @click="preConfirmarCancel(c.id)" class="w-full py-3 bg-slate-950 text-rose-500 rounded-xl text-[10px] font-black italic border border-rose-900/20 uppercase">Cancelar Turno</button>
       </div>
     </div>
 
+    <!-- MODAL CONFIRMAR CANCELACIÓN (SIN GOOGLE) -->
+    <div v-if="modals.confirmCancel" class="fixed inset-0 z-[60] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-6 text-center">
+        <div class="bg-slate-900 border border-rose-500/30 p-10 rounded-[3rem] space-y-6 max-w-xs w-full pop-in shadow-2xl">
+            <div class="text-4xl text-rose-500">✕</div>
+            <h2 class="text-xl font-black text-white uppercase italic leading-tight">¿Cancelar Turno?</h2>
+            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">Esta acción no se puede deshacer. Tu espacio quedará libre.</p>
+            <div class="flex flex-col gap-2">
+                <button @click="ejecutarCancelacion" class="w-full py-4 bg-rose-600 rounded-2xl font-black text-xs uppercase shadow-xl">Sí, Cancelar</button>
+                <button @click="modals.confirmCancel = false" class="text-[9px] font-bold text-zinc-700 uppercase tracking-widest mt-2">Mantener Cita</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE ÉXITO PREMIUM -->
-    <div v-if="successModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-6 z-50">
-      <div class="bg-slate-900 border border-purple-500/30 p-10 rounded-[3rem] text-center space-y-6 shadow-2xl max-w-xs w-full animate-in zoom-in duration-300">
-        <div class="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">✓</div>
+    <div v-if="successModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-6 z-50 text-center">
+      <div class="bg-slate-900 border border-purple-500/30 p-10 rounded-[3rem] space-y-6 shadow-2xl max-w-xs w-full animate-in zoom-in duration-300">
+        <div class="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner italic">✓</div>
         <div class="space-y-2">
-          <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">¡Turno Agendado!</h2>
+          <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white leading-none">¡Turno Agendado!</h2>
           <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-relaxed">Tu lugar ha sido reservado con éxito en {{ bizName }}.</p>
         </div>
         <button @click="successModal = false; location.reload()" class="w-full py-4 bg-purple-600 rounded-2xl font-black italic uppercase text-xs tracking-[0.2em] shadow-lg">Excelente</button>
@@ -88,22 +108,43 @@
         const tab = ref('reserva');
         const bizId = ref('');
         const bizName = ref('Cargando...');
+        const bizTel = ref('');
         const pausado = ref(false);
         const successModal = ref(false);
+        const searched = ref(false);
         const bizConfig = ref({ inicio: '08:00', fin: '18:00', duracion: 60 });
         const occupiedSlots = ref([]);
         const minDate = new Date().toISOString().split('T')[0];
         const form = ref({ date: '', time: '', cli: '', tel: '' });
         const searchTel = ref('');
         const misCitas = ref([]);
+        const modals = ref({ confirmCancel: false });
+        const selectedCitaId = ref(null);
+
+        const formatAMPM = (h) => { if(!h) return ''; let [hh, mm] = h.split(':'); hh = parseInt(hh); const ampm = hh >= 12 ? 'PM' : 'AM'; hh = hh % 12 || 12; return `${hh}:${mm} ${ampm}`; };
 
         const availableSlots = computed(() => {
           const slots = [];
+          const now = new Date();
+          const todayStr = now.toISOString().split('T')[0];
+          const currentTime = now.getHours() + ":" + now.getMinutes();
+
           let current = new Date(`2024-01-01T${bizConfig.value.inicio}`);
           const end = new Date(`2024-01-01T${bizConfig.value.fin}`);
+
           while(current < end) {
             const timeStr = current.toTimeString().slice(0, 5);
-            if(!occupiedSlots.value.includes(timeStr)) slots.push(timeStr);
+            
+            // Si es hoy, ocultar horas pasadas
+            let isPast = false;
+            if(form.value.date === todayStr) {
+                const [h, m] = timeStr.split(':');
+                if (parseInt(h) < now.getHours() || (parseInt(h) === now.getHours() && parseInt(m) <= now.getMinutes())) {
+                    isPast = true;
+                }
+            }
+
+            if(!occupiedSlots.value.includes(timeStr) && !isPast) slots.push(timeStr);
             current.setMinutes(current.getMinutes() + bizConfig.value.duracion);
           }
           return slots;
@@ -116,6 +157,7 @@
             const { data } = await sb.from('perfil_barberia').select('*').eq('id', id).single();
             if(data) {
               bizName.value = data.nombre_negocio;
+              bizTel.value = data.celular;
               pausado.value = data.esta_pausado;
               bizConfig.value = { inicio: data.hora_inicio, fin: data.hora_fin, duracion: data.duracion_minutos };
             }
@@ -129,23 +171,30 @@
         };
 
         const save = async () => {
+          if(!form.value.cli || !form.value.tel) return;
           const { error } = await sb.from('citas').insert([{ barberia_id: bizId.value, nombre_cliente: form.value.cli, celular_cliente: form.value.tel, fecha_turno: form.value.date, hora_turno: form.value.time, estado: 'pending' }]);
           if(!error) successModal.value = true;
         };
 
         const consultar = async () => {
+          searched.value = false;
           const { data } = await sb.from('citas').select('*').eq('barberia_id', bizId.value).eq('celular_cliente', searchTel.value);
           misCitas.value = data || [];
+          searched.value = true;
         };
 
-        const cancelar = async (id) => {
-          if(confirm('¿Deseas cancelar?')) {
-            await sb.from('citas').delete().eq('id', id);
+        const preConfirmarCancel = (id) => {
+            selectedCitaId.value = id;
+            modals.value.confirmCancel = true;
+        };
+
+        const ejecutarCancelacion = async () => {
+            await sb.from('citas').delete().eq('id', selectedCitaId.value);
+            modals.value.confirmCancel = false;
             consultar();
-          }
         };
 
-        return { tab, bizName, pausado, form, successModal, minDate, availableSlots, searchTel, misCitas, fetchOcupados, save, consultar, cancelar };
+        return { tab, bizName, bizTel, searched, pausado, form, successModal, minDate, availableSlots, searchTel, misCitas, modals, fetchOcupados, save, consultar, preConfirmarCancel, ejecutarCancelacion, formatAMPM };
       }
     }).mount('#app');
   </script>
