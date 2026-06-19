@@ -339,10 +339,19 @@
           localStorage.setItem('zapicitas_id', x.id); auth.value = true; fetchTodo(); fetchIntegrantes();
           sb.channel('realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'citas', filter: `barberia_id=eq.${x.id}` }, () => fetchTodo()).subscribe();
         };
-
+        
         const handleAuth = async () => {
           if (isReg.value) {
-            const exp = new Date(); exp.setDate(exp.getDate() + 30);
+            // Lee el plan desde la URL del checkout
+            const planType = new URLSearchParams(window.location.search).get('plan') || 'mensual';
+            const exp = new Date(); 
+            
+            if (planType === 'anual') {
+              exp.setDate(exp.getDate() + 365); // 365 días si es anual
+            } else {
+              exp.setDate(exp.getDate() + 30);  // 30 días si es mensual
+            }
+
             const generatedSlug = form.value.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
             const { data: n } = await sb.from('perfil_barberia').insert([{ 
               nombre_negocio: form.value.name, 
@@ -351,6 +360,9 @@
               fecha_expiracion: exp.toISOString(),
               slug: generatedSlug
             }]).select().single();
+            if (n) loginSuccess(n); else showM("Error: El número ya existe");
+          } else {
+            
             if (n) loginSuccess(n); else showM("Error: El número ya existe");
           } else {
             const { data: x } = await sb.from('perfil_barberia').select('*').eq('celular', form.value.tel).single();
