@@ -340,14 +340,14 @@
           sb.channel('realtime').on('postgres_changes', { event: '*', schema: 'public', table: 'citas', filter: `barberia_id=eq.${x.id}` }, () => fetchTodo()).subscribe();
         };
         
-        const handleAuth = async () => {
+      const handleAuth = async () => {
           if (isReg.value) {
-            // Lee el plan desde la URL del checkout
+            // Lee el plan de redirección
             const planType = new URLSearchParams(window.location.search).get('plan') || 'mensual';
             const exp = new Date(); 
             
             if (planType === 'anual') {
-              exp.setDate(exp.getDate() + 365); // 365 días si es anual
+              exp.setDate(exp.getDate() + 365); // 1 año si es anual
             } else {
               exp.setDate(exp.getDate() + 30);  // 30 días si es mensual
             }
@@ -360,11 +360,10 @@
               fecha_expiracion: exp.toISOString(),
               slug: generatedSlug
             }]).select().single();
-            if (n) loginSuccess(n); else showM("Error: El número ya existe");
-          } else {
             
             if (n) loginSuccess(n); else showM("Error: El número ya existe");
           } else {
+            // Login normal
             const { data: x } = await sb.from('perfil_barberia').select('*').eq('celular', form.value.tel).single();
             if (x && x.clave_acceso === form.value.pass) loginSuccess(x); else showM("Datos incorrectos");
           }
