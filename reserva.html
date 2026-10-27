@@ -175,7 +175,7 @@
         onMounted(async () => {
           const slug = new URLSearchParams(window.location.search).get('n');
           if (slug) {
-            const { data } = await sb.from('perfil_barberia').select('*').eq('slug', slug).single();
+            const { data } = await sb.from('perfil_barberia').select('id, nombre_negocio, celular, esta_pausado, hora_inicio, hora_fin, duracion_minutos').eq('slug', slug).single();
             if(data) {
               bizId.value = data.id;
               bizName.value = data.nombre_negocio;
@@ -226,7 +226,7 @@
 
         const consultar = async () => {
           searched.value = false;
-          const { data } = await sb.from('citas').select('*').eq('barberia_id', bizId.value).eq('celular_cliente', searchTel.value);
+          const { data } = await sb.from('citas').select('id, fecha_turno, hora_turno, estado, integrante_id').eq('barberia_id', bizId.value).eq('celular_cliente', searchTel.value);
           misCitas.value = data || [];
           searched.value = true;
         };
